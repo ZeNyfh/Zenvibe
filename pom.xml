@@ -117,7 +117,7 @@
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>lavasrc</artifactId>
-            <version>4.2.0</version>
+            <version>4.7.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>

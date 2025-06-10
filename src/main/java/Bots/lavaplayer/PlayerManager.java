@@ -4,6 +4,7 @@ import Bots.CommandEvent;
 import com.github.natanbc.lavadsp.timescale.TimescalePcmAudioFilter;
 import com.github.natanbc.lavadsp.vibrato.VibratoPcmAudioFilter;
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager;
+import com.github.topi314.lavasrc.ytdlp.YtdlpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.filter.AudioFilter;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -24,6 +25,7 @@ import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -61,19 +63,21 @@ public class PlayerManager {
         this.musicManagers = new HashMap<>();
         this.audioPlayerManager = new DefaultAudioPlayerManager();
 
-        YoutubeAudioSourceManager ytSource = new YoutubeAudioSourceManager(true, new TvHtml5Embedded(), new Tv(), new Web(), new Ios(), new WebEmbedded());
-        ytSource.setPlaylistPageCount(50);
-
-        Dotenv dotenv = Dotenv.load();
-        String ytToken = dotenv.get("YTREFRESHTOKEN");
-        if (ytToken == null) {
-            System.err.println("YTREFRESHTOKEN is not set in .env, YouTube may not work properly.");
-            ytSource.useOauth2(ytSource.getOauth2RefreshToken(), false);
-        } else {
-            ytSource.useOauth2(ytToken, true);
+        String ytdlpName = "yt-dlp.exe";
+        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+            ytdlpName = "yt-dlp_linux";
+        }
+        File ytdlpFile = new File(ytdlpName);
+        if (!ytdlpFile.exists()) {
+           System.err.println("File not found, stopping the bot for now because youtube is crucial, please add: " + ytdlpName);
+           System.err.println("https://github.com/yt-dlp/yt-dlp");
+           System.exit(1);
         }
 
-        this.audioPlayerManager.registerSourceManager(ytSource);
+        YtdlpAudioSourceManager ytdlpSource = new YtdlpAudioSourceManager(ytdlpFile.getAbsolutePath());
+        ytdlpSource.setSearchLimit(1);
+
+        this.audioPlayerManager.registerSourceManager(ytdlpSource);
 
         String spotifyClientID = Dotenv.load().get("SPOTIFYCLIENTID");
         String spotifyClientSecret = Dotenv.load().get("SPOTIFYCLIENTSECRET");
