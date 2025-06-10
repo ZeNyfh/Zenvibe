@@ -158,7 +158,7 @@ public class Main extends ListenerAdapter {
             System.out.println(env.getName() + " doesn't exist, creating now.");
             ignoreFiles = env.createNewFile();
             FileWriter writer = new FileWriter(".env");
-            writer.write("# This is the bot token, it needs to be set.\nTOKEN=\n# This is the hex value for the bot colour\nCOLOUR=\n# These 2 are required for spotify support with the bot.\nSPOTIFYCLIENTID=\nSPOTIFYCLIENTSECRET=\n# This is the last.fm API key for some functions of zenvibe\nLASTFMTOKEN=\n# YouTube refresh token, optional.\nYTREFRESHTOKEN=");
+            writer.write("# This is the bot token, it needs to be set.\nTOKEN=\n# This is the hex value for the bot colour\nCOLOUR=\n# These 2 are required for spotify support with the bot.\nSPOTIFYCLIENTID=\nSPOTIFYCLIENTSECRET=\n# This is the last.fm API key for some functions of zenvibe\nLASTFMTOKEN=");
             writer.close();
         }
         if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
