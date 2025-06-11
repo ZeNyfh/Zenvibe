@@ -4,7 +4,6 @@ import Bots.BaseCommand;
 import Bots.CommandEvent;
 import Bots.Main;
 import Bots.lavaplayer.PlayerManager;
-import dev.lavalink.youtube.YoutubeSource;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 
@@ -48,7 +47,6 @@ public class CommandInfo extends BaseCommand {
         long time = currentTimeMillis();
         event.replyEmbeds(response -> {
             eb.appendDescription("⏱️  " + event.localise("cmd.info.ping", currentTimeMillis() - time));
-            eb.appendDescription("-# YoutubeSource " + event.localise("cmd.info.version", YoutubeSource.VERSION));
             eb.appendDescription("\n-# " + event.getJDA().getSelfUser().getName() + " " + event.localise("cmd.info.version", botVersion));
             response.editMessageEmbeds(eb.build());
         }, eb.build());
