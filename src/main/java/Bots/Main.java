@@ -243,21 +243,35 @@ public class Main extends ListenerAdapter {
         TimerTask task = new TimerTask() {
             final File updateFile = new File("update/bot.jar");
             final File tempDir = new File("temp/");
-            int cleanUpTime = 0;
+
+            int cleanUpTime = 300; // 5 minutes
+            int ytdlpUpdateTime = 7200; // 2 hours
 
             @Override
             public void run() {
                 // temp directory cleanup
-                cleanUpTime++;
+                cleanUpTime--;
                 // we shouldn't need to check this often or if the directory is empty
-                if (cleanUpTime > 300) {
+                if (cleanUpTime <= 0) {
                     File[] contents = tempDir.listFiles();
                     if (contents != null && contents.length != 0) {
                         // we don't want to delete something as it is being written to.
                         Path fullDir = Paths.get("temp/").toAbsolutePath();
                         if (System.currentTimeMillis() - tempDir.lastModified() > 2000)
                             deleteFiles(fullDir.toAbsolutePath().toString());
-                        cleanUpTime = 0;
+                        cleanUpTime = 300;
+                    }
+                }
+
+                // yt-dlp_linux updater and cleanup
+                ytdlpUpdateTime--;
+                File ytdlpFile = new File("yt-dlp_linux");
+                if (ytdlpUpdateTime <= 0) {
+                    try {
+                        ytdlpUpdateTime = 21600;
+                        Runtime.getRuntime().exec(ytdlpFile.getAbsolutePath() + " --update");
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
                 }
 
