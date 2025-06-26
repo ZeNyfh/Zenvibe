@@ -56,8 +56,7 @@ import static Bots.CommandEvent.createQuickError;
 import static Bots.CommandEvent.createQuickSuccess;
 import static Bots.GuildDataManager.GetConfig;
 import static Bots.GuildDataManager.SaveConfigs;
-import static Bots.LocaleManager.getLocalisedTimeUnits;
-import static Bots.LocaleManager.managerLocalise;
+import static Bots.LocaleManager.*;
 import static java.lang.System.currentTimeMillis;
 
 public class Main extends ListenerAdapter {
@@ -606,6 +605,7 @@ public class Main extends ListenerAdapter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        guildLocales.putIfAbsent(event.getGuild().getIdLong(), languages.get("english"));
     }
 
     @Override
