@@ -7,6 +7,9 @@ import Bots.lavaplayer.PlayerManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.util.Objects;
 
 import static Bots.Main.*;
@@ -20,6 +23,7 @@ public class CommandInfo extends BaseCommand {
         int vcCount = 0;
         int memberCount = 0;
         int playingCount = 0;
+
         for (Guild guild : event.getJDA().getGuilds()) {
             if (Objects.requireNonNull(guild.getSelfMember().getVoiceState()).inAudioChannel()) {
                 vcCount++;
@@ -28,6 +32,18 @@ public class CommandInfo extends BaseCommand {
                 playingCount++;
             }
             memberCount += guild.getMemberCount();
+        }
+
+        String ytdlpVersion;
+        try {
+            Process process = new ProcessBuilder(new File("yt-dlp_linux").getAbsolutePath(), "--version").start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            ytdlpVersion = reader.readLine();
+            ytdlpVersion = ytdlpVersion.substring(2, ytdlpVersion.length()-1);
+            reader.close();
+            process.waitFor();
+        } catch (Exception e) {
+            ytdlpVersion = "Unknown";
         }
 
         long memoryUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
@@ -45,8 +61,10 @@ public class CommandInfo extends BaseCommand {
         eb.appendDescription(event.localise("cmd.info.playingCount", playingCount));
         eb.appendDescription(event.localise("cmd.info.gatewayPing", event.getJDA().getGatewayPing()));
         long time = currentTimeMillis();
+        String finalYtdlpVersion = ytdlpVersion;
         event.replyEmbeds(response -> {
             eb.appendDescription("⏱️  " + event.localise("cmd.info.ping", currentTimeMillis() - time));
+            eb.appendDescription("-# " + "yt-dlp" + " " + event.localise("cmd.info.version", finalYtdlpVersion));
             eb.appendDescription("\n-# " + event.getJDA().getSelfUser().getName() + " " + event.localise("cmd.info.version", botVersion));
             response.editMessageEmbeds(eb.build());
         }, eb.build());
