@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static Bots.Main.*;
-import static Bots.lavaplayer.LastFMManager.encode;
+import static Bots.lavaplayer.LastFMManager.filterMetadata;
 
 public class CommandSkip extends BaseCommand {
     @Override
@@ -84,9 +84,9 @@ public class CommandSkip extends BaseCommand {
                     AudioTrack track = audioPlayer.getPlayingTrack();
                     // TODO: should be replaced with actual logic checking if last.fm has either the author or the artist name in the title.
                     String artistName = (track.getInfo().author.isEmpty() || track.getInfo().author == null)
-                            ? encode((track.getInfo().title).toLowerCase(), false, true)
-                            : encode(track.getInfo().author.toLowerCase(), false, true);
-                    String title = encode(track.getInfo().title, true, false);
+                            ? filterMetadata((track.getInfo().title).toLowerCase())
+                            : filterMetadata(track.getInfo().author.toLowerCase());
+                    String title = filterMetadata(track.getInfo().title.toLowerCase());
                     PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + artistName + " - " + title, false);
                     messageBuilder.append("♾️ ")
                             .append(event.localise("cmd.skip.autoplayQueued", artistName, title));

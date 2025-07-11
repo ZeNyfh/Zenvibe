@@ -11,6 +11,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+import static Bots.lavaplayer.LastFMManager.filterMetadata;
+
 public class LRCLIBManager {
     public static String getLyrics(AudioTrack track) {
         if (track.getInfo().title == null || track.getInfo().title.equalsIgnoreCase("unknown title")) {
@@ -57,6 +59,8 @@ public class LRCLIBManager {
             title = RadioDataFetcher.getStreamSongNow(track.getInfo().uri)[0];
         }
 
+        title = filterMetadata(title);
+
         String artist = track.getInfo().author;
         if (track.getInfo().isStream && Objects.equals(track.getSourceManager().getSourceName(), "http")) {
             artist = "";
@@ -64,17 +68,8 @@ public class LRCLIBManager {
         // add stream author/artist here.
 
         urlBuilder.append(URLEncoder.encode(artist + " " + title, StandardCharsets.UTF_8).trim());
-        String url = urlBuilder.toString();
-        if (url.contains("+%28")) {
-            url = url.split("\\+%28")[0].trim();
-        }
-        if (url.contains("%5B")) {
-            url = url.split("\\+%5B")[0].trim();
-        }
-        if (url.toLowerCase().contains("+ft.")) {
-            url = url.split("\\+ft\\.")[0].trim();
-        }
-        return url;
+        System.out.println(urlBuilder);
+        return urlBuilder.toString();
     }
 
     private static String parseLyrics(String rawJson) {

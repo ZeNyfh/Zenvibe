@@ -19,7 +19,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static Bots.CommandEvent.createQuickError;
 import static Bots.LocaleManager.managerLocalise;
 import static Bots.Main.*;
-import static Bots.lavaplayer.LastFMManager.encode;
+import static Bots.lavaplayer.LastFMManager.filterMetadata;
 
 public class TrackScheduler extends AudioEventAdapter {
 
@@ -103,9 +103,9 @@ public class TrackScheduler extends AudioEventAdapter {
                 if (canAutoPlay) {
                     // TODO: will be replaced by https://github.com/ZeNyfh/Zenvibe/pull/166
                     String artistName = (track.getInfo().author.isEmpty() || track.getInfo().author == null)
-                            ? encode(track.getInfo().title.toLowerCase(), false, true)
-                            : encode(track.getInfo().author.toLowerCase(), false, true);
-                    String title = encode(track.getInfo().title, true, false);
+                            ? filterMetadata(track.getInfo().title.toLowerCase())
+                            : filterMetadata(track.getInfo().author.toLowerCase());
+                    String title = filterMetadata(track.getInfo().title.toLowerCase());
                     PlayerManager.getInstance().loadAndPlay(trackData.eventOrChannel, "ytsearch:" + artistName + " " + title, true);
                     createQuickEmbed(managerLocalise("tsched.autoplay.queued", lang), artistName + " - " + title);
                 } else { // cannot autoplay
