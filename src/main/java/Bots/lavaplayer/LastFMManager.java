@@ -110,16 +110,21 @@ public class LastFMManager {
     };
 
     public static String filterMetadata(String track) {
-        Pattern bracketContent = Pattern.compile("[(\\[{<«【《『„](.*)[)\\]}>»】》』“]");
+        Pattern bracketContent = Pattern.compile("(?i)[(\\[{<«【《『„](.*)[)\\]}>»】》』“]");
         Matcher matcher = bracketContent.matcher(track);
-        String bracketContentString = matcher.group(0);
+        System.out.println(track);
+        if (!matcher.find()) {
+            return track.trim();
+        }
 
+        String bracketContentString = matcher.group(1).toLowerCase();
         for (String filter : titleFilters) {
-            if (bracketContentString.contains(filter)) {
+            if (bracketContentString.contains(filter.toLowerCase())) {
                 track = matcher.replaceAll("");
             }
         }
 
+        System.out.println(track);
         return track.trim();
     }
 
