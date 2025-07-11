@@ -12,6 +12,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static Bots.Main.autoPlayedTracks;
 import static Bots.Main.botVersion;
@@ -40,15 +42,17 @@ public class LastFMManager {
 
         String songName;
         if (track.getInfo().title.contains("-")) {
-            songName = encode(track.getInfo().title.toLowerCase(), true, true);
+            songName = filterMetadata(track.getInfo().title.toLowerCase());
         } else {
-            songName = encode(track.getInfo().title.toLowerCase(), true, false);
+            songName = filterMetadata(track.getInfo().title.toLowerCase());
         }
         // TODO: should be replaced with actual logic checking if last.fm has either the author or the artist name in the title.
         String artistName = (track.getInfo().author.isEmpty() || track.getInfo().author == null || track.getInfo().title.contains("-"))
-                ? encode((track.getInfo().title).toLowerCase(), false, true)
-                : encode((track.getInfo().author).toLowerCase(), false, true);
+                ? filterMetadata((track.getInfo().title).toLowerCase())
+                : (track.getInfo().author).toLowerCase();
 
+        songName = URLEncoder.encode(songName, StandardCharsets.UTF_8);
+        artistName = URLEncoder.encode(artistName, StandardCharsets.UTF_8);
 
         StringBuilder urlStringBuilder = new StringBuilder();
         urlStringBuilder.append("http://ws.audioscrobbler.com/2.0/?method=track.getSimilar&limit=5&autocorrect=1&artist=").append(artistName).append("&track=").append(songName);
@@ -84,23 +88,39 @@ public class LastFMManager {
     }
 
 
-    public static String encode(String str, boolean isTitle, boolean shouldCheck) {
-        str = URLEncoder.encode(str, StandardCharsets.UTF_8).toLowerCase();
-        if (str.contains("%28")) str = str.split("%28")[0];
-        if (str.contains("%5b")) str = str.split("%5b")[0];
-        if (str.contains("ft.")) str = str.split("ft\\.")[0];
-        if (str.contains("lyric")) str = str.split("lyric", 2)[0];
-        if (str.contains("official")) str = str.split("official", 2)[0];
-        str = !str.startsWith("vevo") ? str.split("vevo", 2)[0] : str.replaceAll("vevo", "").trim();
-        if (str.contains("+")) str = str.replaceAll("\\+", " ").trim();
-        if (shouldCheck && str.contains("-")) {
-            String[] split = str.split("-");
-            return isTitle
-                    ? split[1].replaceAll("\\+", " ").trim().replaceAll(" ", "+")
-                    : split[0].replaceAll("\\+", " ").trim().replaceAll(" ", "+");
-        } else {
-            return str.replaceAll("\\+", " ").replaceAll(" ", "+");
+    private static final String[] titleFilters = {
+        // yt
+        "Official Video", "Music Video", "Lyric Video", "Visualizer", "Audio", "Official Audio", "Album Audio",
+        "Live", "Live Performance", "HD", "HQ", "4K", "360°", "VR",
+        // spotify
+        "Official Spotify", "Spotify Singles", "Spotify Session", "Recorded at Spotify Studios",
+        "Spotify Exclusive", "Podcast", "Episode", "B-Side", "Session",
+        // flags
+        "Explicit", "Clean", "Unedited", "Remastered", "Remaster", "Deluxe", "Extended", "Bonus Track", "Cover",
+        "Acoustic", "Instrumental", "Radio Edit", "Reissue", "Anniversary Edition",
+        // tags
+        "VEVO", "YouTube", "YT", "Streaming", "Stream",
+        // decorators
+        "With Lyrics", "Lyrics", "ft.", "feat.", "featuring", "vs.", "x", "Official", "Original", "Version",
+        "Edit", "Mix", "Mashup",
+        // release
+        "Album Version", "Single Version", "EP Version",
+        // misc
+        "||", "▶", "❌", "●", "...", "---", "•••", "FREE DOWNLOAD", "OUT NOW", "NEW"
+    };
+
+    public static String filterMetadata(String track) {
+        Pattern bracketContent = Pattern.compile("[(\\[{<«【《『„](.*)[)\\]}>»】》』“]");
+        Matcher matcher = bracketContent.matcher(track);
+        String bracketContentString = matcher.group(0);
+
+        for (String filter : titleFilters) {
+            if (bracketContentString.contains(filter)) {
+                track = matcher.replaceAll("");
+            }
         }
+
+        return track.trim();
     }
 
     private static String extractTracks(String rawJson, long guildID) {
