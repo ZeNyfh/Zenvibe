@@ -109,18 +109,44 @@ public class LastFMManager {
         "||", "▶", "❌", "●", "...", "---", "•••", "FREE DOWNLOAD", "OUT NOW", "NEW"
     };
 
+    private static final String[] rawTitleFilters = {
+            // yt
+            "OFFICIAL LYRIC VIDEO", "Music Video", "Lyric Video", "Official Audio", "Album Audio", "Live Performance",
+            "HD", "HQ", "4K", "360°", "VR",
+            // spotify
+            "Official Spotify", "Spotify Singles", "Spotify Session", "Recorded at Spotify Studios",
+            "Spotify Exclusive",
+            // flags
+            "Explicit", "Unedited", "Remastered", "Remaster", "Extended", "Bonus Track", "Acoustic", "Instrumental",
+            "Radio Edit", "Reissue", "Anniversary Edition",
+            // tags
+            "VEVO", "YouTube", "YT", "Streaming", "Stream",
+            // decorators
+            "With Lyrics", "Lyrics", "ft.", "feat.", "featuring", "vs.", "x", "Official", "Original", "Version",
+            "Edit", "Mix", "Mashup",
+            // release
+            "Album Version", "Single Version", "EP Version",
+            // misc
+            "||", "▶", "❌", "●", "...", "---", "•••", "FREE DOWNLOAD", "OUT NOW", "NEW"
+    };
+
     public static String filterMetadata(String track) {
         Pattern bracketContent = Pattern.compile("(?i)[(\\[{<«【《『„](.*)[)\\]}>»】》』“]");
         Matcher matcher = bracketContent.matcher(track);
         System.out.println(track);
-        if (!matcher.find()) {
-            return track.trim();
+
+        if (matcher.find()) {
+            String bracketContentString = matcher.group(1).toLowerCase();
+            for (String filter : titleFilters) {
+                if (bracketContentString.contains(filter.toLowerCase())) {
+                    track = matcher.replaceAll("");
+                }
+            }
         }
 
-        String bracketContentString = matcher.group(1).toLowerCase();
-        for (String filter : titleFilters) {
-            if (bracketContentString.contains(filter.toLowerCase())) {
-                track = matcher.replaceAll("");
+        for (String filter : rawTitleFilters) {
+            if (track.toLowerCase().contains(filter.toLowerCase())) {
+                track = track.replace(filter, "");
             }
         }
 
