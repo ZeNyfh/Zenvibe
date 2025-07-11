@@ -110,9 +110,10 @@
 
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
-            <artifactId>lavasrc</artifactId>
-            <version>4.7.0</version>
+            <artifactId>lavasrc-plugin</artifactId>
+            <version>d8cba39</version>
         </dependency>
+
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>protocol-jvm</artifactId>
