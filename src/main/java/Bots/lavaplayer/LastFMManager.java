@@ -112,24 +112,24 @@ public class LastFMManager {
     };
 
     private static final String[] rawTitleFilters = {
-            // yt
-            "OFFICIAL LYRIC VIDEO", "Music Video", "Lyric Video", "Official Audio", "Album Audio", "Live Performance",
-            "HD", "HQ", "4K", "360°", "VR",
-            // spotify
-            "Official Spotify", "Spotify Singles", "Spotify Session", "Recorded at Spotify Studios",
-            "Spotify Exclusive",
-            // flags
-            "Explicit", "Unedited", "Remastered", "Remaster", "Extended", "Bonus Track", "Acoustic", "Instrumental",
-            "Radio Edit", "Reissue", "Anniversary Edition",
-            // tags
-            "VEVO", "YouTube", "YT", "Streaming", "Stream",
-            // decorators
-            "With Lyrics", "Lyrics", "ft.", "feat.", "featuring", "vs.", "x", "Official", "Original", "Version",
-            "Edit", "Mix", "Mashup",
-            // release
-            "Album Version", "Single Version", "EP Version",
-            // misc
-            "||", "▶", "❌", "●", "...", "---", "•••", "FREE DOWNLOAD", "OUT NOW", "NEW"
+        // yt
+        "OFFICIAL LYRIC VIDEO", "Music Video", "Lyric Video", "Official Audio", "Album Audio", "Live Performance",
+        "HD", "HQ", "4K", "360°", "VR",
+        // spotify
+        "Official Spotify", "Spotify Singles", "Spotify Session", "Recorded at Spotify Studios",
+        "Spotify Exclusive",
+        // flags
+        "Explicit", "Unedited", "Remastered", "Remaster", "Extended", "Bonus Track", "Acoustic", "Instrumental",
+        "Radio Edit", "Reissue", "Anniversary Edition",
+        // tags
+        "VEVO", "YouTube", "YT", "Streaming", "Stream",
+        // decorators
+        "With Lyrics", "Lyrics", "ft.", "feat.", "featuring", "vs.", "x", "Official", "Original", "Version",
+        "Edit", "Mix", "Mashup",
+        // release
+        "Album Version", "Single Version", "EP Version",
+        // misc
+        "||", "▶", "❌", "●", "...", "---", "•••", "FREE DOWNLOAD", "OUT NOW", "NEW"
     };
 
     private static final Map<String, String> equivalentChars = new HashMap<>() {{
