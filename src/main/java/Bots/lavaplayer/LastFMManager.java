@@ -11,7 +11,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -130,10 +132,29 @@ public class LastFMManager {
             "||", "▶", "❌", "●", "...", "---", "•••", "FREE DOWNLOAD", "OUT NOW", "NEW"
     };
 
+    private static final Map<String, String> equivalentChars = new HashMap<>() {{
+        put("—", "-");
+        put("–", "-");
+        put("‐", "-");
+        put("⁃", "-");
+        put("⸺", "-");
+        put("…", "...");
+        put("･", ".");
+        put("•", ".");
+        put("․", ".");
+        put("⋅", ".");
+        put("∙", ".");
+    }};
+
+
     public static String filterMetadata(String track) {
         Pattern bracketContent = Pattern.compile("(?i)[(\\[{<«【《『„](.*)[)\\]}>»】》』“]");
         Matcher matcher = bracketContent.matcher(track);
         System.out.println(track);
+
+        for (Map.Entry<String, String> entry : equivalentChars.entrySet()) {
+            track = track.replace(entry.getKey(), entry.getValue());
+        }
 
         if (matcher.find()) {
             String bracketContentString = matcher.group(1).toLowerCase();
