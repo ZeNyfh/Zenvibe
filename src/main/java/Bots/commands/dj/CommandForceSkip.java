@@ -33,21 +33,21 @@ public class CommandForceSkip extends BaseCommand {
         if (AutoplayGuilds.contains(event.getGuild().getIdLong())) {
             String searchTerm = LastFMManager.getSimilarSongs(audioPlayer.getPlayingTrack(), event.getGuild().getIdLong());
             String errorMessage = "❌ **" + event.localise("main.error") + ":**\n";
-            if (searchTerm.equals("notfound")) {
-                messageBuilder.append(errorMessage).append(event.localise("cmd.fs.failedToFind", audioPlayer.getPlayingTrack().getInfo().title));
-            } else if (searchTerm.equals("none")) {
-                messageBuilder.append(errorMessage).append(event.localise("cmd.fs.couldNotFind"));
-            } else if (searchTerm.isEmpty()) {
-                messageBuilder.append(errorMessage).append(event.localise("cmd.fs.nullSearchTerm"));
-            } else { // we can play
-                AudioTrack track = audioPlayer.getPlayingTrack();
-                // TODO: should be replaced with actual logic checking if last.fm has either the author or the artist name in the title.
-                String artistName = (track.getInfo().author == null || track.getInfo().author.isEmpty())
-                        ? filterMetadata(track.getInfo().title.toLowerCase())
-                        : filterMetadata(track.getInfo().author.toLowerCase());
-                String title = filterMetadata(track.getInfo().title.toLowerCase());
-                PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + artistName + " - " + title, false);
-                messageBuilder.append("♾️ ").append(event.localise("cmd.fs.autoplayQueued", artistName, title));
+            switch (searchTerm) {
+                case "notfound" ->
+                        messageBuilder.append(errorMessage).append(event.localise("cmd.fs.failedToFind", audioPlayer.getPlayingTrack().getInfo().title));
+                case "none" -> messageBuilder.append(errorMessage).append(event.localise("cmd.fs.couldNotFind"));
+                case "" -> messageBuilder.append(errorMessage).append(event.localise("cmd.fs.nullSearchTerm"));
+                default -> {
+                    AudioTrack track = audioPlayer.getPlayingTrack();
+                    // TODO: should be replaced with actual logic checking if last.fm has either the author or the artist name in the title.
+                    String artistName = (track.getInfo().author == null || track.getInfo().author.isEmpty())
+                            ? filterMetadata(track.getInfo().title.toLowerCase())
+                            : filterMetadata(track.getInfo().author.toLowerCase());
+                    String title = filterMetadata(track.getInfo().title.toLowerCase());
+                    PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + artistName + " - " + title, false);
+                    messageBuilder.append("♾️ ").append(event.localise("cmd.fs.autoplayQueued", artistName, title));
+                }
             }
         }
         if (event.getArgs().length > 1 && event.getArgs()[1].matches("^\\d+$")) { // autoplay logic shouldn't exist here
