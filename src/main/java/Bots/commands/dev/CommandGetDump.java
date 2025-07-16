@@ -19,7 +19,7 @@ public class CommandGetDump extends BaseCommand {
         new File("temp/dump.txt").delete();
         event.deferReply();
         try {
-            Process p = Runtime.getRuntime().exec("jps");
+            Process p = new ProcessBuilder("jps").start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
             String line;
@@ -35,7 +35,7 @@ public class CommandGetDump extends BaseCommand {
                 event.replyEmbeds(event.createQuickError("Could not get dump as the process ID was not found."));
                 return;
             }
-            p = Runtime.getRuntime().exec("jstack " + PID);
+            p = new ProcessBuilder("jstack " + PID).start();
             reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
             BufferedWriter writer = new BufferedWriter(new FileWriter("temp/dump.txt"));
 
