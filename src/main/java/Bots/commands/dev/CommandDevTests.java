@@ -4,6 +4,11 @@ import Bots.BaseCommand;
 import Bots.CommandEvent;
 import Bots.CommandStateChecker.Check;
 import Bots.LocaleManager;
+import Bots.lavaplayer.GuildMusicManager;
+import Bots.lavaplayer.LastFMManager;
+import Bots.lavaplayer.PlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -93,6 +98,12 @@ public class CommandDevTests extends BaseCommand {
                 LocaleManager.syncLocaleFiles();
                 LocaleManager.init(event.getJDA());
                 event.reply("synced all locales and reinitialised them.");
+            } else if (command.equalsIgnoreCase("scrobble")) {
+                GuildMusicManager musicManager = PlayerManager.getInstance().getMusicManager(event.getGuild());
+                AudioPlayer audioPlayer = musicManager.audioPlayer;
+                AudioTrack track = audioPlayer.getPlayingTrack();
+                LastFMManager.scrobble(track, event.getUser().getId());
+                event.reply("Supposedly scrobbled " + track.getInfo().title + " by " + track.getInfo().author + " to last.fm");
             } else {
                 event.reply("Unrecognised dev command " + command);
             }
