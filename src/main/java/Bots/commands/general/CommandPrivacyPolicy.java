@@ -3,7 +3,7 @@ package Bots.commands.general;
 import Bots.BaseCommand;
 import Bots.CommandEvent;
 
-import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.managers.EmbedManager.createQuickEmbed;
 
 public class CommandPrivacyPolicy extends BaseCommand {
 

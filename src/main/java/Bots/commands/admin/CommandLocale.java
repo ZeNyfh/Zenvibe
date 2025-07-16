@@ -12,7 +12,7 @@ import java.util.Objects;
 
 import static Bots.CommandEvent.createQuickError;
 import static Bots.CommandEvent.createQuickSuccess;
-import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.managers.EmbedManager.createQuickEmbed;
 import static Bots.managers.EventManager.registerSelectionInteraction;
 import static Bots.managers.GuildDataManager.GetGuildConfig;
 import static Bots.managers.LocaleManager.languages;

@@ -1,6 +1,6 @@
-package Bots;
+package Bots.managers;
 
-import Bots.managers.LocaleManager;
+import Bots.Main;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 import static Bots.managers.LocaleManager.getLocalisedTimeUnits;
 import static Bots.Main.botColour;
 
-public class EmbedHelper {
+public class EmbedManager {
 
     public static MessageEmbed createQuickEmbed(String title, String description, String footer) {
         EmbedBuilder eb = new EmbedBuilder();

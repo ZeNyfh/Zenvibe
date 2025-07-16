@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.managers.EmbedManager.createQuickEmbed;
 import static Bots.Main.*;
 
 // TODO: Purge this file and re-make the system to be better

@@ -16,8 +16,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import java.util.ArrayList;
 import java.util.List;
 
-import static Bots.EmbedHelper.createQuickEmbed;
-import static Bots.EmbedHelper.sanitise;
+import static Bots.managers.EmbedManager.createQuickEmbed;
+import static Bots.managers.EmbedManager.sanitise;
 import static Bots.Main.*;
 import static Bots.lavaplayer.LastFMManager.filterMetadata;
 

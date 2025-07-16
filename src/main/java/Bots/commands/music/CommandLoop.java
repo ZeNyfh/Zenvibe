@@ -4,7 +4,7 @@ import Bots.BaseCommand;
 import Bots.CommandEvent;
 import Bots.CommandStateChecker.Check;
 
-import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.managers.EmbedManager.createQuickEmbed;
 import static Bots.Main.LoopGuilds;
 
 public class CommandLoop extends BaseCommand {

@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
-import static Bots.EmbedHelper.toTimestamp;
+import static Bots.managers.EmbedManager.toTimestamp;
 import static Bots.managers.EventManager.registerButtonInteraction;
 import static Bots.managers.LocaleManager.managerLocalise;
 import static Bots.Main.*;
