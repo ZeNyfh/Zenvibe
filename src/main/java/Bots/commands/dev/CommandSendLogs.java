@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-import static Bots.Main.createQuickEmbed;
+import static Bots.EmbedHelper.createQuickEmbed;
 
 public class CommandSendLogs extends BaseCommand {
     @Override

@@ -1,4 +1,4 @@
-package Bots;
+package Bots.managers;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -7,7 +7,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -19,8 +18,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static Bots.GuildDataManager.GetGuildConfig;
 import static Bots.Main.guildLocales;
+import static Bots.managers.GuildDataManager.GetGuildConfig;
 
 public class LocaleManager {
     public static Map<String, Map<String, String>> languages = new HashMap<>();
@@ -116,9 +115,9 @@ public class LocaleManager {
                 if (!localeMap.containsKey(k)) {
                     if (!isMissing) {
                         String[] fileSplit = localeFile.split("/");
-                        String langName = fileSplit[fileSplit.length-1];
+                        String langName = fileSplit[fileSplit.length - 1];
                         String flag = ":flag_" + langName.split("\\.", 2)[0] + ":";
-                        System.err.println("## " + flag + " " + fileSplit[fileSplit.length-1] + " is missing keys.");
+                        System.err.println("## " + flag + " " + fileSplit[fileSplit.length - 1] + " is missing keys.");
                         isMissing = true;
                     }
                     System.err.println("- ENGLISH KEY: " + languages.get("english").get(k).replaceAll("%(.)\\$s", "{$1}"));
@@ -135,7 +134,7 @@ public class LocaleManager {
         for (String locale : languages.keySet()) {
             if (languages.get(locale) == lang) {
                 if (lang.get(key) == null) {
-                    System.err.println(locale.toUpperCase() + " IS MISSING A KEY: " +  key);
+                    System.err.println(locale.toUpperCase() + " IS MISSING A KEY: " + key);
                     return key;
                 }
             }

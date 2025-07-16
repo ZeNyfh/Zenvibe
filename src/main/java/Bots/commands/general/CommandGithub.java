@@ -3,7 +3,7 @@ package Bots.commands.general;
 import Bots.BaseCommand;
 import Bots.CommandEvent;
 
-import static Bots.Main.createQuickEmbed;
+import static Bots.EmbedHelper.createQuickEmbed;
 
 public class CommandGithub extends BaseCommand {
     @Override

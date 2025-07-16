@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import java.util.List;
 
+import static Bots.EmbedHelper.createQuickEmbed;
 import static Bots.Main.*;
 import static Bots.lavaplayer.LastFMManager.filterMetadata;
 

@@ -3,7 +3,7 @@ package Bots.commands.dev;
 import Bots.BaseCommand;
 import Bots.CommandEvent;
 import Bots.CommandStateChecker.Check;
-import Bots.LocaleManager;
+import Bots.managers.LocaleManager;
 import Bots.lavaplayer.GuildMusicManager;
 import Bots.lavaplayer.LastFMManager;
 import Bots.lavaplayer.PlayerManager;
@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.util.List;
 
 import static Bots.Main.*;
+import static Bots.managers.EventManager.registerButtonInteraction;
 
 public class CommandDevTests extends BaseCommand {
     private static void writeGuilds(CommandEvent event) {

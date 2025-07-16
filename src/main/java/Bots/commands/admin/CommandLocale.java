@@ -2,7 +2,6 @@ package Bots.commands.admin;
 
 import Bots.BaseCommand;
 import Bots.CommandEvent;
-import Bots.CommandStateChecker;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
@@ -13,9 +12,11 @@ import java.util.Objects;
 
 import static Bots.CommandEvent.createQuickError;
 import static Bots.CommandEvent.createQuickSuccess;
-import static Bots.GuildDataManager.GetGuildConfig;
-import static Bots.LocaleManager.languages;
-import static Bots.LocaleManager.managerLocalise;
+import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.managers.EventManager.registerSelectionInteraction;
+import static Bots.managers.GuildDataManager.GetGuildConfig;
+import static Bots.managers.LocaleManager.languages;
+import static Bots.managers.LocaleManager.managerLocalise;
 import static Bots.Main.*;
 
 public class CommandLocale extends BaseCommand {

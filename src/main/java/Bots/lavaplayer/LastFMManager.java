@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static Bots.GuildDataManager.GetConfig;
+import static Bots.managers.GuildDataManager.GetConfig;
 import static Bots.Main.*;
 import static Bots.lavaplayer.RadioDataFetcher.getStreamSongNow;
 

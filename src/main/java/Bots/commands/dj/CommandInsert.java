@@ -15,7 +15,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import java.util.ArrayList;
 import java.util.List;
 
-import static Bots.Main.createQuickEmbed;
+import static Bots.EmbedHelper.createQuickEmbed;
+
 
 public class CommandInsert extends BaseCommand {
     @Override

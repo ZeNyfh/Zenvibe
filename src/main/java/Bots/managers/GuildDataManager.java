@@ -1,4 +1,4 @@
-package Bots;
+package Bots.managers;
 
 import Bots.lavaplayer.GuildMusicManager;
 import Bots.lavaplayer.PlayerManager;

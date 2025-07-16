@@ -9,7 +9,7 @@ import Bots.lavaplayer.PlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 
 import static Bots.CommandStateChecker.PerformChecks;
-import static Bots.Main.createQuickEmbed;
+import static Bots.EmbedHelper.createQuickEmbed;
 
 public class CommandPause extends BaseCommand {
     @Override

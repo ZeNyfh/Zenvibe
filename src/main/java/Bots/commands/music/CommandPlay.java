@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import static Bots.CommandStateChecker.PerformChecks;
-import static Bots.Main.createQuickEmbed;
+import static Bots.EmbedHelper.createQuickEmbed;
 
 public class CommandPlay extends BaseCommand {
     final public Set<String> audioFiles = Set.of(
@@ -109,7 +109,7 @@ public class CommandPlay extends BaseCommand {
 
         // play attachments
         if (!playableAttachments.isEmpty()) {
-            Message.Attachment att = playableAttachments.get(0);
+            Message.Attachment att = playableAttachments.getFirst();
             String fileExtension = att.getFileExtension() != null ? att.getFileExtension().toLowerCase() : "";
 
             if (fileExtension.equals("txt")) {

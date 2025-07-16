@@ -9,8 +9,8 @@ import com.github.natanbc.lavadsp.vibrato.VibratoPcmAudioFilter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
+import static Bots.EmbedHelper.createQuickEmbed;
 import static Bots.Main.AudioFilters;
-import static Bots.Main.createQuickEmbed;
 
 public class CommandVibrato extends BaseCommand {
     @Override

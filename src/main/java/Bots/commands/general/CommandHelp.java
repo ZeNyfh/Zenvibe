@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static Bots.LocaleManager.managerLocalise;
+import static Bots.managers.EventManager.registerButtonInteraction;
+import static Bots.managers.LocaleManager.managerLocalise;
 import static Bots.Main.*;
 
 public class CommandHelp extends BaseCommand {

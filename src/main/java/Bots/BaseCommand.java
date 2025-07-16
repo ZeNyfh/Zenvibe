@@ -3,6 +3,7 @@ package Bots;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
 import static Bots.CommandStateChecker.*;
+import static Bots.EmbedHelper.createQuickEmbed;
 
 // Custom base command class used by all commands
 // Structured in the recommended order of a command, ignoring the var and enum at the top
@@ -21,7 +22,7 @@ public abstract class BaseCommand {
     public final void executeWithChecks(CommandEvent event) throws Exception { //For main - do not override
         CheckResult checkResult = PerformChecks(event, this.getChecks());
         if (!checkResult.succeeded()) {
-            event.replyEmbeds(Main.createQuickEmbed(event.localise("statecheck.notAllowed"), checkResult.getMessage()));
+            event.replyEmbeds(createQuickEmbed(event.localise("statecheck.notAllowed"), checkResult.getMessage()));
         } else {
             this.execute(event);
         }

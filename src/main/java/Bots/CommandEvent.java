@@ -1,5 +1,7 @@
 package Bots;
 
+import Bots.managers.GuildDataManager;
+import Bots.managers.LocaleManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
@@ -20,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static Bots.EmbedHelper.createQuickEmbed;
 import static Bots.Main.*;
 
 // TODO: Purge this file and re-make the system to be better

@@ -1,12 +1,13 @@
 package Bots;
 
+import Bots.managers.LocaleManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-import static Bots.LocaleManager.getLocalisedTimeUnits;
+import static Bots.managers.LocaleManager.getLocalisedTimeUnits;
 import static Bots.Main.botColour;
 
 public class EmbedHelper {
