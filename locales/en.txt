@@ -158,6 +158,11 @@ cmd.rem.invalidArgs=Invalid arguments, integers only.
 cmd.rem.tooLarge=The provided number was larger than the size of the queue.
 cmd.rem.removed=Skipped queued track {1} successfully. // a track position, aka "the track that was at position 5 in the queue".
 
+cmd.scrobble.cannotDM=I am unable to message you privately, please allow me to send you a direct message or use slash commands!
+cmd.scrobble.authPending=Please authenticate your Last.fm profile so that Zenvibe can scrobble: **{1}**\n\n**After this, use the command again to finalise the process.** // 1 here is a url
+cmd.scrobble.startedScrobbling=I have enabled scrobbling for your profile! This will work in all discord servers with Zenvibe, use the `scrobble` command again to turn scrobbling off.
+cmd.scrobble.stoppedScrobbling=I have disabled scrobbling for your profile! You will need to reauthenticate if you wish to re-enable scrobbling.
+
 cmd.seek.invalidArg=The argument is invalid, please use the format `[HOURS]:[MINUTES]:<SECONDS>` // keep the [] and <>, translate everything inside them too.
 cmd.seek.timeTooLow=The time provided less than or equal to 0.
 cmd.seek.setPos=Set the position of the track to: **{1}**. // 1 here being a simple timestamp like 12:34 (can include hours)

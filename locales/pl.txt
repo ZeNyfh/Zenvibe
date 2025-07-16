@@ -153,6 +153,11 @@ cmd.rem.invalidArgs=Nieprawidłowe argumenty, tylko liczby całkowite.
 cmd.rem.tooLarge=Podana liczba jest większa niż rozmiar kolejki.
 cmd.rem.removed=Usunięto z kolejki utwór {1} pomyślnie.
 
+cmd.scrobble.cannotDM=Nie mogę wysłać tobie prywatnej wiadomości, pozwól mi wysłać tobie wiadomość prywatną lub użyć komend slash!
+cmd.scrobble.authPending=Uwierzytelnij swój profil Last.fm, aby Zenvibe mógł scrobblować: **{1}**\n\n**Następnie użyj ponownie tej komendy, aby zakończyć proces.**
+cmd.scrobble.startedScrobbling=Włączono scrobblowanie dla Twojego profilu! Będzie to działać na wszystkich serwerach Discord z Zenvibe. Użyj ponownie komendy `scrobble`, aby wyłączyć scrobblowanie.
+cmd.scrobble.stoppedScrobbling=Wyłączyono scrobblowanie dla Twojego profilu! Aby ponownie włączyć scrobblowanie, musisz się ponownie uwierzytelnić.
+
 cmd.seek.invalidArg=Argument jest nieprawidłowy, użyj formatu `[GODZINY]:[MINUTY]:<SEKUNDY>`
 cmd.seek.timeTooLow=Podany czas jest mniejszy lub równy 0.
 cmd.seek.setPos=Ustawiono pozycję utworu do: **{1}**.
