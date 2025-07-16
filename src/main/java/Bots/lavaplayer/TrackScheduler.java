@@ -17,6 +17,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static Bots.CommandEvent.createQuickError;
+import static Bots.EmbedHelper.toSimpleTimestamp;
 import static Bots.LocaleManager.managerLocalise;
 import static Bots.Main.*;
 import static Bots.lavaplayer.LastFMManager.filterMetadata;

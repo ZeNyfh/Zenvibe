@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.Objects;
 
+import static Bots.EmbedHelper.toTimestamp;
 import static Bots.Main.*;
 import static java.lang.System.currentTimeMillis;
 

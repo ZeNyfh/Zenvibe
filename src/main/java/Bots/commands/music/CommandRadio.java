@@ -24,6 +24,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static Bots.CommandStateChecker.PerformChecks;
+import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.EmbedHelper.sanitise;
 import static Bots.Main.*;
 
 public class CommandRadio extends BaseCommand {

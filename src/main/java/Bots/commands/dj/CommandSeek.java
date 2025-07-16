@@ -9,7 +9,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
-import static Bots.Main.toSimpleTimestamp;
+import static Bots.EmbedHelper.toSimpleTimestamp;
 
 public class CommandSeek extends BaseCommand {
     @Override

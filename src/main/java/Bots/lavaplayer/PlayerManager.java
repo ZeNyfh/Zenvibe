@@ -37,6 +37,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static Bots.CommandEvent.createQuickError;
+import static Bots.EmbedHelper.sanitise;
+import static Bots.EmbedHelper.toTimestamp;
 import static Bots.LocaleManager.managerLocalise;
 import static Bots.Main.*;
 

@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.EmbedHelper.toSimpleTimestamp;
 import static Bots.Main.*;
 import static Bots.lavaplayer.LastFMManager.filterMetadata;
 

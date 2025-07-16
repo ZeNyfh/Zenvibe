@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 
 import java.util.Objects;
 
+import static Bots.EmbedHelper.toSimpleTimestamp;
 import static Bots.Main.*;
 
 public class CommandNowPlaying extends BaseCommand {
