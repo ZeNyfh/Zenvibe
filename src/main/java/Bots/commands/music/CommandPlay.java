@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -32,13 +33,13 @@ public class CommandPlay extends BaseCommand {
             if (!fileExtension.equals("txt")) {
                 return false; // could be an actual audio file
             }
-            url = new URL(att.getUrl());
+            url = URI.create(att.getUrl()).toURL();
         } else {
             String link = String.valueOf(event.getArgs()[1]);
             if (!link.split("&")[0].split("\\?")[0].toLowerCase().endsWith(".txt")) { // could be an actual audio file
                 return false;
             }
-            url = new URL(link);
+            url = URI.create(link).toURL();
         }
 
         URLConnection connection = url.openConnection();

@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public class CommandRadio extends BaseCommand {
     public static String getRadio(String search) throws IOException {
         URL url;
         try {
-            url = new URL("https://www.internet-radio.com/search/?radio=" + search);
+            url = URI.create("https://www.internet-radio.com/search/?radio=" + search).toURL();
         } catch (Exception e) {
             e.printStackTrace();
             return "None";

@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -157,7 +158,7 @@ public class Main extends ListenerAdapter {
             System.out.println(env.getName() + " doesn't exist, creating now.");
             ignoreFiles = env.createNewFile();
             FileWriter writer = new FileWriter(".env");
-            writer.write("# This is the bot token, it needs to be set.\nTOKEN=\n# This is the hex value for the bot colour\nCOLOUR=\n# These 2 are required for spotify support with the bot.\nSPOTIFYCLIENTID=\nSPOTIFYCLIENTSECRET=\n# This is the last.fm API key for some functions of zenvibe\nLASTFMTOKEN=");
+            writer.write("# This is the bot token, it needs to be set.\nTOKEN=\n# This is the hex value for the bot colour\nCOLOUR=\n# These 2 are required for spotify support with the bot.\nSPOTIFYCLIENTID=\nSPOTIFYCLIENTSECRET=\n# This is the last.fm API key for some functions of zenvibe\nLASTFMTOKEN=# This is the last.fm API Secret, only used for scrobbling.\nLASTFMSECRET=");
             writer.close();
         }
         if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
@@ -195,7 +196,7 @@ public class Main extends ListenerAdapter {
             while (resources.hasMoreElements()) {
                 URL folder = resources.nextElement();
                 if (folder.getPath().contains("classes")) {
-                    folder = new URL("file:" + folder.getPath() + "Bots/commands/");
+                    folder = URI.create("file:" + folder.getPath() + "Bots/commands/").toURL();
                 }
                 try {
                     for (File subfolder : Objects.requireNonNull(new File(folder.getFile()).listFiles())) {
