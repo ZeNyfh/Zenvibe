@@ -2,6 +2,7 @@ package Bots.commands.music;
 
 import Bots.BaseCommand;
 import Bots.CommandEvent;
+import Bots.CommandStateChecker;
 import Bots.CommandStateChecker.Check;
 import Bots.lavaplayer.PlayerManager;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
@@ -19,6 +20,9 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static Bots.CommandStateChecker.PerformChecks;
+import static Bots.Main.createQuickEmbed;
 
 public class CommandPlay extends BaseCommand {
     final public Set<String> audioFiles = Set.of(
@@ -71,7 +75,7 @@ public class CommandPlay extends BaseCommand {
 
     @Override
     public Check[] getChecks() {
-        return new Check[]{Check.IS_CHANNEL_BLOCKED, Check.TRY_JOIN_VC};
+        return new Check[]{Check.IS_CHANNEL_BLOCKED};
     }
 
     @Override
@@ -88,6 +92,19 @@ public class CommandPlay extends BaseCommand {
             if (attachment.getFileExtension() != null && audioFiles.contains(attachment.getFileExtension().toLowerCase())) {
                 playableAttachments.add(attachment);
             }
+        }
+
+        // check if bot should join vc
+        if (args.length == 1 && playableAttachments.isEmpty()) {
+            System.out.println("should not join vc");
+            event.replyEmbeds(event.createQuickError(event.localise("cmd.play.noArgs")));
+            return;
+        }
+
+        CommandStateChecker.CheckResult checkResult = PerformChecks(event, Check.TRY_JOIN_VC);
+        if (!checkResult.succeeded()) {
+            event.replyEmbeds(createQuickEmbed(event.localise("statecheck.notAllowed"), checkResult.getMessage()));
+            return;
         }
 
         // play attachments
