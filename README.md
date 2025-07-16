@@ -1,18 +1,18 @@
 # Zenvibe
 
-Discord bot written in java using JDA and lavaplayer for audio functionality. Has various site support, custom (user defined)
+Discord bot, written in java using JDA and lavaplayer for audio functionality. Has various site support, custom (user-defined)
 dj users or roles and some other cool features for you to play with once you [invite](http://zenvibe.ddns.net/) or self-host the bot.
 
 ## Language support:
 * English 100% - ZeNyfh
 * Polish 100% - ZeNyfh
-* Dutch 100% - etherealelysia
+* Dutch 98% - etherealelysia
 * Danish 100% - SharkRainstorm
-* Spanish 100% - Nois
+* Spanish 98% - Nois
 
 ## Requirements
 
-* [JDK 16](https://adoptium.net/temurin/releases/?version=16&package=jdk)
+* [JDK 21](https://adoptium.net/temurin/releases/?version=21&package=jdk)
 
 ## Usage
 
@@ -23,7 +23,7 @@ Run the bot using the latest included .jar file in releases or compile the jar y
 
 ## Java Installation
 
-JDK 16 can be acquired from [Temurin by Adoptium](https://adoptium.net/temurin/releases/?version=16&package=jdk) or from other trusted sources.
+JDK 21 can be acquired from [Temurin by Adoptium](https://adoptium.net/temurin/releases/?version=21&package=jdk) or from other trusted sources.
 
 ## Note / Help
 
