@@ -22,7 +22,6 @@ import java.io.FileWriter;
 import java.util.List;
 
 import static Bots.Main.*;
-import static Bots.managers.EventManager.registerButtonInteraction;
 
 public class CommandDevTests extends BaseCommand {
     private static void writeGuilds(CommandEvent event) {
