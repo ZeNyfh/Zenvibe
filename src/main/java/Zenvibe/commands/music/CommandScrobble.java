@@ -34,7 +34,6 @@ public class CommandScrobble extends BaseCommand {
             if (scrobbleUsers.get(event.getUser().getId()).contains("REQUEST")) {
                 String sessionKey = fetchWebServiceSession(scrobbleUsers.get(event.getUser().getId()).replace("REQUEST", ""));
                 scrobbleUsers.put(event.getUser().getId(), sessionKey);
-                System.out.println(sessionKey);
                 event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.scrobble.startedScrobbling")));
                 sessionKeys = (org.json.simple.JSONObject) scrobbleUsers;
                 return;

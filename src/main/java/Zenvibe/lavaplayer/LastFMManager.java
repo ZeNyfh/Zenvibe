@@ -120,7 +120,6 @@ public class LastFMManager {
 
         StringBuilder urlStringBuilder = new StringBuilder();
         urlStringBuilder.append("http://ws.audioscrobbler.com/2.0/?method=track.getSimilar&limit=5&autocorrect=1&artist=").append(artistName).append("&track=").append(songName);
-        System.out.println(urlStringBuilder); // debug printing but removing the API key from the print.
         urlStringBuilder.append("&api_key=").append(APIKEY).append("&format=json");
         String urlString = urlStringBuilder.toString();
 

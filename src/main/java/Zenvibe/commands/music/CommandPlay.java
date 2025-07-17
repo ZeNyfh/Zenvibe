@@ -96,7 +96,6 @@ public class CommandPlay extends BaseCommand {
 
         // check if bot should join vc
         if (args.length == 1 && playableAttachments.isEmpty()) {
-            System.out.println("should not join vc");
             event.replyEmbeds(event.createQuickError(event.localise("cmd.play.noArgs")));
             return;
         }

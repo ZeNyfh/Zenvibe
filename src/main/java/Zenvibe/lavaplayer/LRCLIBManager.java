@@ -69,7 +69,6 @@ public class LRCLIBManager {
         // add stream author/artist here.
 
         urlBuilder.append(URLEncoder.encode(artist + " " + title, StandardCharsets.UTF_8).trim());
-        System.out.println(urlBuilder);
         return urlBuilder.toString();
     }
 
