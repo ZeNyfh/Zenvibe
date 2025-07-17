@@ -22,9 +22,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static Zenvibe.managers.GuildDataManager.GetConfig;
 import static Zenvibe.Main.*;
 import static Zenvibe.lavaplayer.RadioDataFetcher.getStreamSongNow;
+import static Zenvibe.managers.GuildDataManager.GetConfig;
 
 // Last.fm wish for their API to be used sensibly; I have outlined with comments how it is being used sensibly with attention to their note found at: https://www.last.fm/api/intro
 public class LastFMManager {
@@ -206,55 +206,85 @@ public class LastFMManager {
         String method = "track.scrobble";
         String timestamp = String.valueOf(Instant.now().getEpochSecond());
         String duration = String.valueOf(track.getDuration() / 1000);
+        String format = "json";
 
         String sessionKey = sessionKeys.get(userID).toString();
-        String apiSignature = getMD5Sign("api_key", APIKEY, "artist", artistName, "chosenByUser", chosenByUser, "duration", duration, "method", method, "sk", sessionKey, "timestamp", timestamp, "track", songName);
 
-        String url = APIURL + "?method=" + method + createAPIURL("&api_key", APIKEY, "artist", artistName, "chosenByUser", chosenByUser, "duration", duration, "method", method, "sk", sessionKey, "timestamp", timestamp, "track", songName) + "&api_sig=" + apiSignature;
-        HttpURLConnection conn = (HttpURLConnection)
-                URI.create(url).toURL().openConnection();
+        TreeMap<String, String> params = new TreeMap<>();
+        params.put("api_key", APIKEY);
+        params.put("artist", artistName);
+        params.put("chosenByUser", chosenByUser);
+        params.put("duration", duration);
+        params.put("method", method);
+        params.put("sk", sessionKey);
+        params.put("timestamp", timestamp);
+        params.put("track", songName);
+
+        // Generate API signature
+        StringBuilder sigBuilder = new StringBuilder();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            sigBuilder.append(entry.getKey()).append(entry.getValue());
+        }
+        sigBuilder.append(LASTFMSECRET);
+
+        String apiSignature = getMD5Hash(sigBuilder.toString());
+
+        // Prepare POST data
+        StringBuilder postData = new StringBuilder();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            if (!postData.isEmpty()) postData.append("&");
+            postData.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+        }
+        postData.append("&api_sig=").append(apiSignature);
+        postData.append("&format=").append(format);
+
+        HttpURLConnection conn = (HttpURLConnection) URI.create(APIURL).toURL().openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("User-Agent", "Zenvibe/" + botVersion);
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        conn.setRequestProperty("Content-Length", String.valueOf(postData.length()));
         conn.setDoOutput(true);
+
         try (OutputStream os = conn.getOutputStream()) {
-            os.write(url.getBytes(StandardCharsets.UTF_8));
+            os.write(postData.toString().getBytes(StandardCharsets.UTF_8));
         }
+
         int code = conn.getResponseCode();
         if (code != 200) {
-            throw new Exception("Scrobble failed, HTTP code: " + code);
+            StringBuilder errorResponse = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getErrorStream()))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    errorResponse.append(line);
+                }
+            }
+            throw new Exception("Scrobble failed, HTTP code: " + code + ", Response: " + errorResponse);
         }
     }
 
-    private static String createAPIURL(String... args) {
-        if (args.length % 2 != 0) {
-            throw new IllegalArgumentException("Odd number of arguments provided.");
-        }
-        TreeMap<String, String> jointArgs = new TreeMap<>();
-        for (int i = 0; i < args.length; i += 2) {
-            jointArgs.put(args[i], args[i + 1]);
-        }
-        StringBuilder builder = new StringBuilder();
-
-        jointArgs.forEach((key, value) -> builder.append(key).append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8)));
-
-        return builder.toString();
-    }
-
-    private static String getMD5Sign(String... strings) {
-        StringBuilder sb = new StringBuilder();
-        for (String s : strings) {
-            sb.append(s);
-        }
-
-        sb.append(LASTFMSECRET);
-        MessageDigest md;
+    private static String getMD5Hash(String input) {
         try {
-            md = MessageDigest.getInstance("MD5");
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(md.digest());
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        md.update(sb.toString().getBytes(StandardCharsets.UTF_8));
-        return (HexFormat.of().formatHex(md.digest()));
+    }
+
+    private static String getMD5Sign(String... strings) {
+        TreeMap<String, String> params = new TreeMap<>();
+        for (int i = 0; i < strings.length; i += 2) {
+            params.put(strings[i], strings[i + 1]);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            sb.append(entry.getKey()).append(entry.getValue());
+        }
+        sb.append(LASTFMSECRET);
+
+        return getMD5Hash(sb.toString());
     }
 
 
