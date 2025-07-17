@@ -223,7 +223,7 @@ public class PlayerManager {
         if (sendEmbed) {
             EmbedBuilder loadingEmbed = new EmbedBuilder();
             loadingEmbed.setColor(botColour);
-            loadingEmbed.setTitle(managerLocalise("pmanager.loading", locale));
+            loadingEmbed.setTitle(managerLocalise("main.loading", locale));
 
             if (eventOrChannel instanceof CommandEvent event) {
                 event.replyEmbeds(response -> {
