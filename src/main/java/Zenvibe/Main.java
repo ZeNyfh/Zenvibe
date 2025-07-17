@@ -190,7 +190,7 @@ public class Main extends ListenerAdapter {
                         if (subfolder.isDirectory()) {
                             for (File classFile : Objects.requireNonNull(subfolder.listFiles())) {
                                 if (classFile.getName().endsWith(".class") && !classFile.getName().contains("$")) {
-                                    classes.add(ClassLoader.getSystemClassLoader().loadClass("Bots.commands." + subfolder.getName() + "." + classFile.getName().substring(0, classFile.getName().length() - 6)));
+                                    classes.add(ClassLoader.getSystemClassLoader().loadClass("Zenvibe.commands." + subfolder.getName() + "." + classFile.getName().substring(0, classFile.getName().length() - 6)));
                                 }
                             }
                         }
