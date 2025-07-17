@@ -7,21 +7,24 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static Zenvibe.CommandEvent.createQuickError;
+import static Zenvibe.lavaplayer.LastFMManager.*;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.toSimpleTimestamp;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
 import static Zenvibe.Main.*;
-import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 
 public class TrackScheduler extends AudioEventAdapter {
 
@@ -60,6 +63,19 @@ public class TrackScheduler extends AudioEventAdapter {
         guildFailCount.remove(guildID);
 
         if (endReason.mayStartNext) {
+            if ((double) player.getPlayingTrack().getPosition() / player.getPlayingTrack().getDuration() > 0.5) {
+                // half of the song has played, scrobble.
+                AudioChannelUnion channel = Objects.requireNonNull(Objects.requireNonNull(getBot().getGuildById(((PlayerManager.TrackData) track.getUserData()).guildId)).getSelfMember().getVoiceState()).getChannel();
+                for (Member member : Objects.requireNonNull(channel).getMembers()) {
+                    if (sessionKeys.containsKey(member.getId())) {
+                        try {
+                            scrobble(track, member.getId());
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
             if (LoopGuilds.contains(guildID)) { // track is looping
                 AudioTrack loopTrack = track.makeClone();
                 this.player.startTrack(loopTrack, false);
