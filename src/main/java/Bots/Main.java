@@ -272,7 +272,7 @@ public class Main extends ListenerAdapter {
                 if (ytdlpUpdateTime <= 0) {
                     try {
                         ytdlpUpdateTime = 21600;
-                        Runtime.getRuntime().exec(ytdlpFile.getAbsolutePath() + " --update");
+                        new ProcessBuilder(ytdlpFile.getAbsolutePath() + " --update").start();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -349,7 +349,7 @@ public class Main extends ListenerAdapter {
                 return;
             }
             String[] command = new String[]{"cmd", "/c", "del", "/Q", "\"" + filePrefix + "\\*\""};
-            Process process = Runtime.getRuntime().exec(command);
+            Process process = new ProcessBuilder(command).start();
             int exitCode = process.waitFor();
             String error = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
             if (exitCode != 0) {
