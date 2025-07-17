@@ -41,7 +41,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Main-Class>Bots.Main</Main-Class>
+                            <Main-Class>Zenvibe.Main</Main-Class>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -60,7 +60,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>Bots.Main</mainClass>
+                                    <mainClass>Zenvibe.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
