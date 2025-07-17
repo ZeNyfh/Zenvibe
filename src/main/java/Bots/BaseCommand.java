@@ -3,7 +3,7 @@ package Bots;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
 import static Bots.CommandStateChecker.*;
-import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.managers.EmbedManager.createQuickEmbed;
 
 // Custom base command class used by all commands
 // Structured in the recommended order of a command, ignoring the var and enum at the top

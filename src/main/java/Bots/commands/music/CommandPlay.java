@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import static Bots.CommandStateChecker.PerformChecks;
-import static Bots.EmbedHelper.createQuickEmbed;
+import static Bots.managers.EmbedManager.createQuickEmbed;
 
 public class CommandPlay extends BaseCommand {
     final public Set<String> audioFiles = Set.of(
