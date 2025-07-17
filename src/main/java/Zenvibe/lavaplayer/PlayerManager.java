@@ -463,6 +463,7 @@ public class PlayerManager {
         public final Long channelId;
         public final Long guildId;
         public final String username;
+        public Boolean wasSkipped;
 
         /**
          * Constructs a new <code>TrackUserData</code> object.
@@ -479,6 +480,7 @@ public class PlayerManager {
                 channel = (GuildMessageChannelUnion) eventOrChannel;
                 username = "";
             }
+            this.wasSkipped = false;
             this.channelId = channel.getIdLong();
             this.guildId = channel.getGuild().getIdLong();
         }

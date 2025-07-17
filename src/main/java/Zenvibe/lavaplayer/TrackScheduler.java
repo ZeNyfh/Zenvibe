@@ -63,18 +63,9 @@ public class TrackScheduler extends AudioEventAdapter {
         guildFailCount.remove(guildID);
 
         if (endReason.mayStartNext) {
-            if ((double) player.getPlayingTrack().getPosition() / player.getPlayingTrack().getDuration() > 0.5) {
-                // half of the song has played, scrobble.
+            if (!trackData.wasSkipped) {
                 AudioChannelUnion channel = Objects.requireNonNull(Objects.requireNonNull(getBot().getGuildById(((PlayerManager.TrackData) track.getUserData()).guildId)).getSelfMember().getVoiceState()).getChannel();
-                for (Member member : Objects.requireNonNull(channel).getMembers()) {
-                    if (sessionKeys.containsKey(member.getId())) {
-                        try {
-                            scrobble(track, member.getId());
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
+                vcScrobble(channel, track);
             }
             if (LoopGuilds.contains(guildID)) { // track is looping
                 AudioTrack loopTrack = track.makeClone();

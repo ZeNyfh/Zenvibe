@@ -15,7 +15,9 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.sanitise;
 import static Zenvibe.Main.*;
@@ -53,6 +55,12 @@ public class CommandForceSkip extends BaseCommand {
             }
         }
         if (event.getArgs().length > 1 && event.getArgs()[1].matches("^\\d+$")) { // autoplay logic shouldn't exist here
+            PlayerManager.TrackData trackData = (PlayerManager.TrackData) audioPlayer.getPlayingTrack().getUserData();
+            trackData.wasSkipped = true;
+            audioPlayer.getPlayingTrack().setUserData(trackData);
+            if ((double) audioPlayer.getPlayingTrack().getPosition() / audioPlayer.getPlayingTrack().getDuration() >= 0.5) {
+                vcScrobble(Objects.requireNonNull(event.getGuild().getSelfMember().getVoiceState()).getChannel(), audioPlayer.getPlayingTrack());
+            }
             int givenPosition = Integer.parseInt(event.getArgs()[1]);
             if (givenPosition - 1 >= musicManager.scheduler.queue.size()) {
                 musicManager.scheduler.queue.clear();
@@ -76,6 +84,12 @@ public class CommandForceSkip extends BaseCommand {
                         event.getArgs()[1], trackHyperLink)));
             }
         } else {
+            PlayerManager.TrackData trackData = (PlayerManager.TrackData) audioPlayer.getPlayingTrack().getUserData();
+            trackData.wasSkipped = true;
+            audioPlayer.getPlayingTrack().setUserData(trackData);
+            if ((double) audioPlayer.getPlayingTrack().getPosition() / audioPlayer.getPlayingTrack().getDuration() >= 0.5) {
+                vcScrobble(Objects.requireNonNull(event.getGuild().getSelfMember().getVoiceState()).getChannel(), audioPlayer.getPlayingTrack());
+            }
             if (!musicManager.scheduler.queue.isEmpty()) {
                 musicManager.scheduler.nextTrack();
                 AudioTrackInfo trackInfo = musicManager.audioPlayer.getPlayingTrack().getInfo();

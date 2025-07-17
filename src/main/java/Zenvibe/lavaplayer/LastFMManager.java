@@ -4,6 +4,8 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
@@ -173,6 +175,18 @@ public class LastFMManager {
         }
 
         return track.trim();
+    }
+
+    public static void vcScrobble(AudioChannelUnion channel, AudioTrack track) {
+        for (Member member : Objects.requireNonNull(channel).getMembers()) {
+            if (sessionKeys.containsKey(member.getId())) {
+                try {
+                    scrobble(track, member.getId());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 
     public static void scrobble(AudioTrack track, String userID) throws Exception {

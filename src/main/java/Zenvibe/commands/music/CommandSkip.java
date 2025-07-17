@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.toSimpleTimestamp;
 import static Zenvibe.Main.*;
@@ -57,6 +58,13 @@ public class CommandSkip extends BaseCommand {
         }
 
         if (votedMemberCount >= effectiveMemberCount / 2) {
+            PlayerManager.TrackData trackData = (PlayerManager.TrackData) audioPlayer.getPlayingTrack().getUserData();
+            trackData.wasSkipped = true;
+            audioPlayer.getPlayingTrack().setUserData(trackData);
+            if ((double) audioPlayer.getPlayingTrack().getPosition() / audioPlayer.getPlayingTrack().getDuration() >= 0.5) {
+                vcScrobble(selfVoiceState.getChannel(), audioPlayer.getPlayingTrack());
+            }
+
             StringBuilder messageBuilder = new StringBuilder();
             if (AutoplayGuilds.contains(event.getGuild().getIdLong())) {
                 String searchTerm = LastFMManager.getSimilarSongs(audioPlayer.getPlayingTrack(), event.getGuild().getIdLong());
