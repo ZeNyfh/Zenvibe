@@ -225,6 +225,7 @@ pmanager.loadFailed=The track failed to load: {1}
 pmanager.noMatches=No matches found for the track.
 pmanager.duration=Duration: `{1}`\n
 pmanager.channel=Channel: `{1}`
+pmanager.loading=Loading...
 
 tsched.autoplay.notFound=Autoplay failed to find {1} // a track name
 tsched.autoplay.noSimilar=Autoplay could not find similar tracks.\n
