@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -186,17 +187,6 @@ public class PlayerManager {
     }
 
     /**
-     * Sends an embed into a given event or channel and replies to the <code>CommandEvent</code>. Shortened overload of
-     * {@link #replyWithEmbed(Object, MessageEmbed, boolean)}.
-     *
-     * @param eventOrChannel    The event or channel in which the embed is to be sent.
-     * @param embed             The embed to be sent in the <code>eventOrChannel</code>.
-     */
-    private void replyWithEmbed(Object eventOrChannel, MessageEmbed embed) {
-        replyWithEmbed(eventOrChannel, embed, false);
-    }
-
-    /**
      * Attempts to load, queue and play a track or playlist from a given URL, and (optionally) sends an embed in the given
      * <code>eventOrChannel</code> based on the results of the method.
      *
@@ -221,14 +211,43 @@ public class PlayerManager {
         if (trackUrl.toLowerCase().contains("spotify")) {
             if (!hasSpotify) {
                 if (sendEmbed) {
-                    replyWithEmbed(eventOrChannel, createQuickError(managerLocalise("pmanager.noSpotify", locale), locale));
+                    MessageEmbed errorEmbed = createQuickError(managerLocalise("pmanager.noSpotify", locale), locale);
+                    replyWithEmbed(eventOrChannel, errorEmbed, false);
                 }
                 loadResultFuture.complete(LoadResult.NO_MATCHES);
                 return loadResultFuture;
             }
         }
 
+        // Send loading embed and handle response asynchronously
+        if (sendEmbed) {
+            EmbedBuilder loadingEmbed = new EmbedBuilder();
+            loadingEmbed.setColor(botColour);
+            loadingEmbed.setTitle(managerLocalise("pmanager.loading", locale));
+
+            if (eventOrChannel instanceof CommandEvent event) {
+                event.replyEmbeds(response -> {
+                    loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, response);
+                }, loadingEmbed.build());
+            } else {
+                ((GuildMessageChannelUnion) eventOrChannel).sendMessageEmbeds(loadingEmbed.build()).queue();
+                loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null);
+            }
+        } else {
+            loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null);
+        }
+
+        return loadResultFuture;
+    }
+
+    /**
+     * Helper method that continues the loading process after the initial loading embed has been sent.
+     */
+    private void loadAndPlayWithResponse(Object eventOrChannel, String trackUrl, Guild commandGuild,
+                                         Map<String, String> locale, CompletableFuture<LoadResult> loadResultFuture,
+                                         CommandEvent.Response loadingResponse) {
         final GuildMusicManager musicManager = this.getMusicManager(commandGuild);
+
         this.audioPlayerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
             /**
              * Sets user data for <code>audioTrack</code>, queues it on the guild's scheduler and (optionally)
@@ -240,14 +259,14 @@ public class PlayerManager {
             public void trackLoaded(AudioTrack audioTrack) {
                 audioTrack.setUserData(new TrackData(eventOrChannel));
                 musicManager.scheduler.queue(audioTrack);
-                if (sendEmbed) {
-                    replyWithEmbed(eventOrChannel, createTrackEmbed(audioTrack).build());
+                if (loadingResponse != null) {
+                    loadingResponse.editMessageEmbeds(createTrackEmbed(audioTrack).build());
                 }
                 loadResultFuture.complete(LoadResult.TRACK_LOADED);
             }
 
             /**
-             * Handles queueing and embed building for playlists  when loaded (assuming the <code>audioPlaylist</code>
+             * Handles queueing and embed building for playlists when loaded (assuming the <code>audioPlaylist</code>
              * instance contains tracks).
              *
              * @param audioPlaylist The <code>AudioPlaylist</code> which was loaded.
@@ -261,12 +280,15 @@ public class PlayerManager {
                     audioTrack.setUserData(new TrackData(eventOrChannel));
                 }
                 if (!tracks.isEmpty()) {
-                    AudioTrack track = tracks.get(0);
+                    AudioTrack track = tracks.getFirst();
                     if (autoplaying)
                         track = tracks.get(ThreadLocalRandom.current().nextInt(2, 4)); // this is to prevent looping tracks
                     if (tracks.size() == 1 || audioPlaylist.getName().contains("Search results for:") || autoplaying) {
                         musicManager.scheduler.queue(track);
-                        if (sendEmbed) {
+                        if (loadingResponse != null && !autoplaying) {
+                            track.setUserData(new TrackData(eventOrChannel));
+                            loadingResponse.editMessageEmbeds(createTrackEmbed(track).build());
+                        } else if (autoplaying) {
                             track.setUserData(new TrackData(eventOrChannel));
                             replyWithEmbed(eventOrChannel, createTrackEmbed(track).build(), autoplaying);
                         }
@@ -290,9 +312,9 @@ public class PlayerManager {
                         if (tracks.size() > 5) {
                             embed.appendDescription("...");
                         }
-                        embed.setThumbnail(getThumbURL(tracks.get(0)));
-                        if (sendEmbed) {
-                            replyWithEmbed(eventOrChannel, embed.build());
+                        embed.setThumbnail(getThumbURL(tracks.getFirst()));
+                        if (loadingResponse != null) {
+                            loadingResponse.editMessageEmbeds(embed.build());
                         }
                     }
                 }
@@ -305,8 +327,9 @@ public class PlayerManager {
              */
             @Override
             public void noMatches() {
-                if (sendEmbed)
-                    replyWithEmbed(eventOrChannel, createQuickError(managerLocalise("pmanager.noMatches", locale), locale));
+                if (loadingResponse != null) {
+                    loadingResponse.editMessageEmbeds(createQuickError(managerLocalise("pmanager.noMatches", locale), locale));
+                }
                 System.err.println("No match found for the track.\nURL:\"" + trackUrl + "\"");
                 loadResultFuture.complete(LoadResult.NO_MATCHES);
             }
@@ -327,13 +350,15 @@ public class PlayerManager {
                     loadFailedBuilder.append(managerLocalise("pmanager.APIError", locale)).append(" ");
                 }
                 loadFailedBuilder.append(e.getMessage());
-                if (sendEmbed)
-                    replyWithEmbed(eventOrChannel, createQuickError(managerLocalise("pmanager.loadFailed", locale, loadFailedBuilder), locale));
+                if (loadingResponse != null) {
+                    loadingResponse.editMessageEmbeds(createQuickError(managerLocalise("pmanager.loadFailed", locale, loadFailedBuilder), locale));
+                }
                 loadResultFuture.complete(LoadResult.LOAD_FAILED);
             }
         });
-        return loadResultFuture;
     }
+
+
 
     /**
      * Returns the URL of the thumbnail for the current <code>AudioTrack</code>, checking if it is a valid image URL.
@@ -354,10 +379,10 @@ public class PlayerManager {
                 return "https://img.youtube.com/vi/" + track.getIdentifier() + "/0.jpg";
             } else if (track.getInfo().uri.toLowerCase().contains("spotify")) {
                 site = "Spotify";
-                url = new URL("https://embed.spotify.com/oembed?url=" + track.getInfo().uri);
+                url = URI.create("https://embed.spotify.com/oembed?url=" + track.getInfo().uri).toURL();
             } else if (track.getInfo().uri.toLowerCase().contains("soundcloud")) {
                 site = "SoundCloud";
-                url = new URL(track.getInfo().uri);
+                url = URI.create(track.getInfo().uri).toURL();
             } else {
                 return null;
             }
