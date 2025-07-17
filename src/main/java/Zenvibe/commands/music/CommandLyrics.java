@@ -27,31 +27,43 @@ public class CommandLyrics extends BaseCommand {
         final GuildMusicManager musicManager = PlayerManager.getInstance().getMusicManager(event.getGuild());
         final AudioPlayer audioPlayer = musicManager.audioPlayer;
 
-        String lyrics = LRCLIBManager.getLyrics(audioPlayer.getPlayingTrack()).trim();
-        if (lyrics.isEmpty()) {
-            event.replyEmbeds(event.createQuickError(event.localise("cmd.lyr.notFound")));
-            return;
-        }
-        EmbedBuilder builder = new EmbedBuilder().setColor(botColour).setFooter(event.localise("cmd.lyr.source"));
-        String title = audioPlayer.getPlayingTrack().getInfo().title;
-        if (audioPlayer.getPlayingTrack().getInfo().isStream && Objects.equals(audioPlayer.getPlayingTrack().getSourceManager().getSourceName(), "http")) {
-            title = RadioDataFetcher.getStreamSongNow(audioPlayer.getPlayingTrack().getInfo().uri)[0];
-        }
+        // Send loading embed
+        EmbedBuilder loadingEmbed = new EmbedBuilder();
+        loadingEmbed.setColor(botColour);
+        loadingEmbed.setDescription(event.localise("main.loading"));
 
-        title = event.localise("cmd.lyr.lyricsForTrack", title);
-        if (title.length() > 256) {
-            title = title.substring(0, 253) + "...";
-        }
-        if (lyrics.length() <= 2000) {
-            builder.setDescription(lyrics);
-            builder.setTitle(title);
-            event.replyEmbeds(builder.build());
-        } else {
-            builder.setDescription(event.localise("cmd.lyr.tooLong"));
-            event.replyEmbeds(builder.build());
-            event.getChannel().sendFiles(FileUpload.fromData(lyrics.getBytes(StandardCharsets.UTF_8), title + ".txt")).queue();
-        }
+        event.replyEmbeds(response -> {
+            // Get lyrics after sending loading embed
+            String lyrics = LRCLIBManager.getLyrics(audioPlayer.getPlayingTrack()).trim();
+
+            if (lyrics.isEmpty()) {
+                response.editMessageEmbeds(event.createQuickError(event.localise("cmd.lyr.notFound")));
+                return;
+            }
+
+            EmbedBuilder builder = new EmbedBuilder().setColor(botColour).setFooter(event.localise("cmd.lyr.source"));
+            String title = audioPlayer.getPlayingTrack().getInfo().title;
+            if (audioPlayer.getPlayingTrack().getInfo().isStream && Objects.equals(audioPlayer.getPlayingTrack().getSourceManager().getSourceName(), "http")) {
+                title = RadioDataFetcher.getStreamSongNow(audioPlayer.getPlayingTrack().getInfo().uri)[0];
+            }
+
+            title = event.localise("cmd.lyr.lyricsForTrack", title);
+            if (title.length() > 256) {
+                title = title.substring(0, 253) + "...";
+            }
+
+            if (lyrics.length() <= 2000) {
+                builder.setDescription(lyrics);
+                builder.setTitle(title);
+                response.editMessageEmbeds(builder.build());
+            } else {
+                builder.setDescription(event.localise("cmd.lyr.tooLong"));
+                response.editMessageEmbeds(builder.build());
+                event.getChannel().sendFiles(FileUpload.fromData(lyrics.getBytes(StandardCharsets.UTF_8), title + ".txt")).queue();
+            }
+        }, loadingEmbed.build());
     }
+
 
     @Override
     public Category getCategory() {
