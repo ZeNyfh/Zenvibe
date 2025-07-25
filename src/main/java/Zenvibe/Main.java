@@ -119,7 +119,8 @@ public class Main extends ListenerAdapter {
         System.out.println("bot is now running, have fun ig");
         botPrefix = "<@" + bot.getSelfUser().getId() + ">";
         readableBotPrefix = "@" + bot.getSelfUser().getName();
-        bot.getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + bot.getGuilds().size() + " servers!"));
+        setPresence();
+        //bot.getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + bot.getGuilds().size() + " servers!"));
         //bot.getPresence().setActivity(Activity.playing(String.format("music for %,d servers! | " + readableBotPrefix + " help", bot.getGuilds().size())));
         for (Guild guild : bot.getGuilds()) {
             trackLoops.put(guild.getIdLong(), 0);
@@ -238,6 +239,9 @@ public class Main extends ListenerAdapter {
         }
     }
 
+    private static void setPresence() {
+        bot.getPresence().setActivity(Activity.playing("Running on limited resources, expect downtime. | playing music for " + bot.getGuilds().size() + " servers!"));
+    }
     // Register hooks and timers as required
     private static void setupTasks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> GuildDataManager.SaveQueues(bot)));
@@ -620,7 +624,9 @@ public class Main extends ListenerAdapter {
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
         trackLoops.put(event.getGuild().getIdLong(), 0);
-        event.getJDA().getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + getBot().getGuilds().size() + " servers!"));
+        setPresence();
+
+        //event.getJDA().getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + getBot().getGuilds().size() + " servers!"));
         //event.getJDA().getPresence().setActivity(Activity.playing(String.format("music for %,d servers! | " + readableBotPrefix + " help", event.getJDA().getGuilds().size())));
         try {
             GuildDataManager.CreateGuildConfig(event.getGuild().getIdLong());
@@ -633,7 +639,8 @@ public class Main extends ListenerAdapter {
     @Override
     public void onGuildLeave(@NotNull GuildLeaveEvent event) {
         trackLoops.remove(event.getGuild().getIdLong());
-        event.getJDA().getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + getBot().getGuilds().size() + " servers!"));
+        setPresence();
+        //event.getJDA().getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + getBot().getGuilds().size() + " servers!"));
         //event.getJDA().getPresence().setActivity(Activity.playing("music for " + event.getJDA().getGuilds().size() + " servers! | " + readableBotPrefix + " help"));
         GuildDataManager.RemoveConfig(event.getGuild().getIdLong());
     }
