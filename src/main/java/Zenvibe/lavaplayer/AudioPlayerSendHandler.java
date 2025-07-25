@@ -6,9 +6,11 @@ import net.dv8tion.jda.api.audio.AudioSendHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class AudioPlayerSendHandler implements AudioSendHandler {
 
+    public static final AtomicLong totalBytesSent = new AtomicLong(0);
     private final AudioPlayer audioPlayer;
     private final ByteBuffer buffer;
     private final MutableAudioFrame frame;
@@ -28,6 +30,7 @@ public class AudioPlayerSendHandler implements AudioSendHandler {
     @Nullable
     @Override
     public ByteBuffer provide20MsAudio() {
+        totalBytesSent.addAndGet(this.buffer.capacity());
         return this.buffer.flip();
     }
 

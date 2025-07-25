@@ -9,11 +9,35 @@ import java.util.*;
 
 import static Zenvibe.Main.botColour;
 import static Zenvibe.Main.commandUsageTracker;
+import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
 
 public class CommandSendUsage extends BaseCommand {
     @Override
     public Check[] getChecks() {
         return new Check[]{Check.IS_DEV};
+    }
+
+    private static String formatDataUsage() {
+        long totalBytes = totalBytesSent.get();
+        long bytes = totalBytes % 1024;
+        long kb = (totalBytes / 1024) % 1024;
+        long mb = (totalBytes / (1024 * 1024)) % 1024;
+        long gb = totalBytes / (1024 * 1024 * 1024);
+
+        StringBuilder result = new StringBuilder();
+        if (gb > 0) {
+            result.append(gb).append("GB, ");
+        }
+        if (mb > 0 || gb > 0) {
+            result.append(mb).append("MB, ");
+        }
+        if (kb > 0 || mb > 0 || gb > 0) {
+            result.append(kb).append("KB");
+        } else {
+            result.append(bytes).append(" bytes");
+        }
+
+        return result.toString();
     }
 
     @Override
@@ -37,6 +61,7 @@ public class CommandSendUsage extends BaseCommand {
         }
         eb.appendDescription("\nslashcommand: "+ commandUsageTracker.get("slashcommand"));
         eb.appendDescription("\nprefixcommand: "+ commandUsageTracker.get("prefixcommand"));
+        eb.appendDescription("\nAudio data sent: "+formatDataUsage());
 
         eb.appendDescription("```");
         event.replyEmbeds(eb.build());
