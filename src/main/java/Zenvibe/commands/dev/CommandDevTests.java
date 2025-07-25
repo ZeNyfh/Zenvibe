@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.util.List;
 
 import static Zenvibe.Main.*;
+import static Zenvibe.managers.LocaleManager.languages;
 
 public class CommandDevTests extends BaseCommand {
     private static void writeGuilds(CommandEvent event) {
@@ -29,7 +30,7 @@ public class CommandDevTests extends BaseCommand {
         List<Guild> guilds = bot.getGuilds();
         StringBuilder builder = new StringBuilder();
         for (Guild g : guilds) {
-            builder.append(g.getName()).append(",").append(g.getMemberCount()).append("\n");
+            builder.append(g.getName().replaceAll(",", "")).append(",").append(g.getMemberCount()).append(guildLocales.get(g.getIdLong()).get("main.languageName")).append(",").append("\n");
         }
         File file = new File("guilds.csv");
         try {
