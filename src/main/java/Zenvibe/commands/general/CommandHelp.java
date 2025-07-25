@@ -48,26 +48,44 @@ public class CommandHelp extends BaseCommand {
         for (BaseCommand Command : commands) {
             if (Command.getCategory() == category) {
                 i++;
+
+                StringBuilder name = new StringBuilder("**");
+                name.append(Command.getNames()[0]).append("** ");
+
+                StringBuilder options = new StringBuilder();
+                if (!Command.getOptions().isEmpty()) {
+                    options.append("`").append(Command.getOptions().replace(" | ", "` | `")).append("`");
+                }
+
+                String description = "\n    - " + Command.getDescription();
+
                 StringBuilder aliases = new StringBuilder();
-                if (Command.getNames().length == 2) {
-                    aliases.append(managerLocalise("cmd.help.alias", lang));
-                } else if (Command.getNames().length > 2) {
-                    aliases.append(managerLocalise("cmd.help.alias.plural", lang));
-                }
-                aliases.append(" ");
-                int j = 0;
-                for (String name : Command.getNames()) {
-                    j++;
-                    if (j == 1) {
-                        continue;
+                if (Command.getNames().length != 1) {
+                    aliases.append("\n    -# **");
+
+                    if (Command.getNames().length == 2) {
+                        aliases.append(managerLocalise("cmd.help.alias", lang));
+                    } else if (Command.getNames().length > 2) {
+                        aliases.append(managerLocalise("cmd.help.alias.plural", lang));
                     }
-                    if (j != Command.getNames().length) {
-                        aliases.append("**(").append(name).append(")**, ");
-                    } else {
-                        aliases.append("**(").append(name).append(")**");
+                    aliases.append("** ");
+
+                    for (int j = 0; j < Command.getNames().length; j++) {
+                        if (j == 0) continue;
+                        String alias = Command.getNames()[j];
+                        aliases.append("`").append(alias).append("`");
+                        if (j+1 != Command.getNames().length) {
+                            aliases.append(" | ");
+                        }
                     }
                 }
-                embed.appendDescription("`" + i + ")` **" + Command.getNames()[0] + " " + Command.getOptions() + "** - " + Command.getDescription() + aliases + "\n\n");
+
+                embed.appendDescription(i + ". ")
+                        .appendDescription(name)
+                        .appendDescription(options)
+                        .appendDescription(description)
+                        .appendDescription(aliases)
+                        .appendDescription("\n");
             }
         }
     }
