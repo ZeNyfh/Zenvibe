@@ -61,6 +61,7 @@ import static Zenvibe.managers.GuildDataManager.GetConfig;
 import static Zenvibe.managers.GuildDataManager.SaveConfigs;
 import static Zenvibe.managers.LocaleManager.languages;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
+import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
 import static java.lang.System.currentTimeMillis;
 
 public class Main extends ListenerAdapter {
@@ -104,6 +105,10 @@ public class Main extends ListenerAdapter {
         }
         GuildDataManager.Init();
         commandUsageTracker = GetConfig("usage-stats");
+        // Initialize totalBytesSent in commandUsageTracker if it doesn't exist
+        commandUsageTracker.putIfAbsent("totalBytesSent", 0L);
+        // Load the saved totalBytesSent value from commandUsageTracker into the AtomicLong
+        totalBytesSent.set((Long) commandUsageTracker.get("totalBytesSent"));
         LastFMManager.Init();
         PlayerManager.getInstance();
         loadCommandClasses();
@@ -246,7 +251,11 @@ public class Main extends ListenerAdapter {
     // Register hooks and timers as required
     private static void setupTasks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> GuildDataManager.SaveQueues(bot)));
-        Runtime.getRuntime().addShutdownHook(new Thread(GuildDataManager::SaveConfigs));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            // Add totalBytesSent to commandUsageTracker before saving
+            commandUsageTracker.put("totalBytesSent", totalBytesSent.get());
+            GuildDataManager.SaveConfigs();
+        }));
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             final File updateFile = new File("update/bot.jar");
@@ -381,6 +390,8 @@ public class Main extends ListenerAdapter {
     }
 
     public static void killMain() {
+        // Add totalBytesSent to commandUsageTracker before saving
+        commandUsageTracker.put("totalBytesSent", totalBytesSent.get());
         SaveConfigs();
         try {
             Thread.sleep(1000);
