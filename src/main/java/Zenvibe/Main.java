@@ -246,7 +246,7 @@ public class Main extends ListenerAdapter {
     }
 
     private static void setPresence() {
-        bot.getPresence().setActivity(Activity.playing("Running on limited resources, expect downtime. | playing music for " + bot.getGuilds().size() + " servers!"));
+        bot.getPresence().setActivity(Activity.playing("Scrobble with last.fm with /scrobble! | playing music for " + bot.getGuilds().size() + " servers!"));
     }
     // Register hooks and timers as required
     private static void setupTasks() {
