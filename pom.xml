@@ -93,13 +93,13 @@
         <dependency>
             <groupId>dev.arbjerg</groupId>
             <artifactId>lavaplayer</artifactId>
-            <version>42792379f87798ec380a4a4f3c2bbd8c53909339-SNAPSHOT</version>
+            <version>66ae62fd8e0fb9c97e0db020b06b91e05f4a6763-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>5.5.0</version>
+            <version>5.6.1</version>
         </dependency>
 
         <dependency>
@@ -111,13 +111,13 @@
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>lavasrc-plugin</artifactId>
-            <version>4.7.3</version>
+            <version>4.8.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>protocol-jvm</artifactId>
-            <version>4.0.1</version>
+            <version>4.8.0</version>
         </dependency>
 
         <dependency>
