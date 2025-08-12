@@ -36,18 +36,6 @@ public class CommandInfo extends BaseCommand {
             memberCount += guild.getMemberCount();
         }
 
-        String ytdlpVersion;
-        try {
-            Process process = new ProcessBuilder(new File("yt-dlp_linux").getAbsolutePath(), "--version").start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            ytdlpVersion = reader.readLine();
-            ytdlpVersion = ytdlpVersion.substring(2, ytdlpVersion.length()-1);
-            reader.close();
-            process.waitFor();
-        } catch (Exception e) {
-            ytdlpVersion = "Unknown";
-        }
-
         long memoryUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle(event.localise("cmd.info.info", event.getJDA().getSelfUser().getName()), null);
@@ -64,10 +52,8 @@ public class CommandInfo extends BaseCommand {
         eb.appendDescription(event.localise("cmd.info.playingCount", playingCount));
         eb.appendDescription(event.localise("cmd.info.gatewayPing", event.getJDA().getGatewayPing()));
         long time = currentTimeMillis();
-        String finalYtdlpVersion = ytdlpVersion;
         event.replyEmbeds(response -> {
             eb.appendDescription("⏱️  " + event.localise("cmd.info.ping", currentTimeMillis() - time));
-            eb.appendDescription("-# " + "yt-dlp" + " " + event.localise("cmd.info.version", finalYtdlpVersion));
             eb.appendDescription("\n-# " + event.getJDA().getSelfUser().getName() + " " + event.localise("cmd.info.version", botVersion));
             response.editMessageEmbeds(eb.build());
         }, eb.build());

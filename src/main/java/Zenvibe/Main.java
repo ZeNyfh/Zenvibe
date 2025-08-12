@@ -286,18 +286,6 @@ public class Main extends ListenerAdapter {
                     }
                 }
 
-                // yt-dlp_linux updater and cleanup
-                ytdlpUpdateTime--;
-                File ytdlpFile = new File("yt-dlp_linux");
-                if (ytdlpUpdateTime <= 0) {
-                    try {
-                        ytdlpUpdateTime = 21600;
-                        new ProcessBuilder(ytdlpFile.getAbsolutePath() + " --update").start();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
                 // updater code
                 if (updateFile.exists() && !System.getProperty("os.name").toLowerCase().contains("windows")) { // auto-updater only works on linux
                     // leeway for upload past the time limit
