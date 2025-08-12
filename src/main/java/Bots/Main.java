@@ -82,6 +82,7 @@ public class Main extends ListenerAdapter {
     private static final Map<String, Consumer<ButtonInteractionEvent>> ButtonInteractionMappings = new HashMap<>();
     private static final Map<String, Consumer<StringSelectInteractionEvent>> SelectionInteractionMappings = new HashMap<>();
     public static Color botColour = new Color(0, 0, 0);
+    public static String ytRefreshToken = "";
     public static String botVersion = ""; // YY.MM.DD
     // config
     public static String botPrefix = "";
@@ -180,6 +181,11 @@ public class Main extends ListenerAdapter {
             botColour = Color.decode(dotenv.get("COLOUR"));
         } catch (NumberFormatException exception) {
             throw new NumberFormatException("Unable to successfully parse the COLOUR from the .env as a colour"); // Provide a more descriptive message
+        }
+        try {
+            ytRefreshToken = dotenv.get("YTREFRESHTOKEN");
+        } catch (NumberFormatException exception) {
+            throw new NumberFormatException("Unable to get yt-refresh token.");
         }
     }
 

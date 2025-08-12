@@ -15,6 +15,7 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -61,21 +62,9 @@ public class PlayerManager {
         this.musicManagers = new HashMap<>();
         this.audioPlayerManager = new DefaultAudioPlayerManager();
 
-        String ytdlpName = "yt-dlp.exe";
-        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
-            ytdlpName = "yt-dlp_linux";
-        }
-        File ytdlpFile = new File(ytdlpName);
-        if (!ytdlpFile.exists()) {
-           System.err.println("File not found, stopping the bot for now because youtube is crucial, please add: " + ytdlpName);
-           System.err.println("https://github.com/yt-dlp/yt-dlp");
-           System.exit(1);
-        }
-
-        YtdlpAudioSourceManager ytdlpSource = new YtdlpAudioSourceManager(ytdlpFile.getAbsolutePath());
-        ytdlpSource.setSearchLimit(1);
-
-        this.audioPlayerManager.registerSourceManager(ytdlpSource);
+        YoutubeAudioSourceManager youtubeAudioSourceManager = new YoutubeAudioSourceManager();
+        youtubeAudioSourceManager.useOauth2(ytRefreshToken, false);
+        this.audioPlayerManager.registerSourceManager(youtubeAudioSourceManager);
 
         String spotifyClientID = Dotenv.load().get("SPOTIFYCLIENTID");
         String spotifyClientSecret = Dotenv.load().get("SPOTIFYCLIENTSECRET");
