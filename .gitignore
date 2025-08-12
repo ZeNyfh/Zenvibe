@@ -15,3 +15,8 @@ logs/*
 start.sh
 data.csv
 src/main/resources/META-INF/MANIFEST.MF
+yt-dlp*
+!.idea/inspectionProfiles/Project_Default.xml
+!.idea/codeStyles
+!.idea/misc.xml
+

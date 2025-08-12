@@ -58,8 +58,8 @@ cmd.help.cat.music=🔊 **Muzyka**
 cmd.help.cat.DJ=🎧 **DJ**
 cmd.help.cat.admin=📑 **Admin**
 cmd.help.cat.dev=🔨 **Dev**
-cmd.help.alias=\n`Alias:`
-cmd.help.alias.plural=\n`Aliasy:`
+cmd.help.alias=Alias:
+cmd.help.alias.plural=Aliasy:
 cmd.help.originalFooter=Kliknij guziki, aby uzyskać więcej informacji o grupie.
 cmd.help.footer=Syntaksa: "<>" to argument wymagany, "[]" to argument opcjonalny. "()" to alternatywne słowo dla komendy.
 cmd.help.embedTitle=📔 **Komendy**
@@ -70,6 +70,7 @@ cmd.info.upTime=⏰ **Czas działania:** {1}\n\n
 cmd.info.discordServers=📡 **Serwery:** {1}\n\n
 cmd.info.discordMembers=👤 **Użytkownicy:** {1}\n\n
 cmd.info.registeredCommands=📑 **Zarejestrowane komendy:** {1}\n\n
+cmd.info.lastFMUsers=🎧 **Użytkownicy Last.fm:** {1}\n\n // the amount of users using last.fm with zenvibe
 cmd.info.voiceChannels=🎵 **Kanały głosowe:** {1}\n\n
 cmd.info.playingCount=🔊 **Liczba odtwarzanych:** {1}\n\n
 cmd.info.gatewayPing=⏱️ **Ping bramy:** {1}ms\n\n
@@ -152,6 +153,11 @@ cmd.rem.noSongs=Brak utworów w kolejce do usunięcia.
 cmd.rem.invalidArgs=Nieprawidłowe argumenty, tylko liczby całkowite.
 cmd.rem.tooLarge=Podana liczba jest większa niż rozmiar kolejki.
 cmd.rem.removed=Usunięto z kolejki utwór {1} pomyślnie.
+
+cmd.scrobble.cannotDM=Nie mogę wysłać tobie prywatnej wiadomości, pozwól mi wysłać tobie wiadomość prywatną lub użyć komend slash!
+cmd.scrobble.authPending=Uwierzytelnij swój profil Last.fm, aby Zenvibe mógł scrobblować: **{1}**\n\n**Następnie użyj ponownie tej komendy, aby zakończyć proces.**
+cmd.scrobble.startedScrobbling=Włączono scrobblowanie dla Twojego profilu! Będzie to działać na wszystkich serwerach Discord z Zenvibe. Użyj ponownie komendy `scrobble`, aby wyłączyć scrobblowanie.
+cmd.scrobble.stoppedScrobbling=Wyłączyono scrobblowanie dla Twojego profilu! Aby ponownie włączyć scrobblowanie, musisz się ponownie uwierzytelnić.
 
 cmd.seek.invalidArg=Argument jest nieprawidłowy, użyj formatu `[GODZINY]:[MINUTY]:<SEKUNDY>`
 cmd.seek.timeTooLow=Podany czas jest mniejszy lub równy 0.
@@ -251,3 +257,6 @@ main.duration=**Czas trwania**\n
 main.update=Wystąpiła aktualizacja bota, twoja kolejka i parametry zostały przywrócone!\nJeśli chcesz zobaczyć, co się zmieniło, możesz dołączyć do serwera pomocy technicznej, który znajdziesz w sekcji „O mnie” bota.
 main.flag=🇵🇱
 main.languageName=polski
+main.loading=Ładowanie...
+
+web.devportal.description=__**Żadne funkcje nigdy nie będą płatne!**__\n\nZenvibe może być dla Ciebie na początku po prostu kolejnym botem muzycznym, ale zapewniam, że różni się od wszystkich innych dostępnych opcji!\n\n- Aby zmienić język, użyj `/language`!\n- Możesz odtwarzać całe playlisty, albumy lub pojedyncze utwory z wielu stron! **W tym linki z Discorda i załączone pliki!**\n- Masz wiele utworów w kolejce z różnych źródeł? Nie ma problemu! Użyj komendy `export`!\nNastępnie możesz odtworzyć plik txt, załączając go do komendy play!\n- Masz irytujących znajomych, którzy ciągle pomijają Twoją ulubioną piosenkę? Nie ma problemu! System DJ umożliwia dodawanie pojedynczych użytkowników lub całych ról!\n- **NIE CIERPISZ** konkretnej części utworu? Nie ma problemu! Możesz użyć komendy `seek`, aby przejść do określonej części, np. `seek 2:38`.\n- Chcesz szybko zatrzymać utwór? To też jest możliwe!\n- Chcesz sprawdzić, ile zostało czasu do końca utworu? Użyj komendy `nowplaying`!\n- Długie nazwy komend Cię denerwują? Możesz używać wielu skrótów! Wszystkie zobaczysz za pomocą komendy `help`! *Niektóre z nich to `p`, `np`, `fs`, `v`, `rem`, `dc` i `clearq`.*\n- Chcesz używać **komend slashowych (/)**? Są obsługiwane!\n- Nie lubisz komend slashowych lub są dla Ciebie zbyt trudne? Możesz **pingować** bota lub **odpowiedzieć** na jego wiadomość, aby użyć komend!\n- Masz propozycję funkcji lub chcesz zgłosić błąd? Nie musisz tworzyć issue na GitHubie – po prostu użyj komendy `bug`, aby wysłać mi wiadomość!

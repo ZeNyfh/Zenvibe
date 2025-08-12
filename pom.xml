@@ -30,8 +30,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.0</version> <!-- use the latest stable version -->
                 <configuration>
-                    <source>16</source>
-                    <target>16</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -41,7 +41,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Main-Class>Bots.Main</Main-Class>
+                            <Main-Class>Zenvibe.Main</Main-Class>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -60,7 +60,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>Bots.Main</mainClass>
+                                    <mainClass>Zenvibe.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -93,19 +93,13 @@
         <dependency>
             <groupId>dev.arbjerg</groupId>
             <artifactId>lavaplayer</artifactId>
-            <version>42792379f87798ec380a4a4f3c2bbd8c53909339-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.lavalink.youtube</groupId>
-            <artifactId>v2</artifactId>
-            <version>1.13.2</version>
+            <version>66ae62fd8e0fb9c97e0db020b06b91e05f4a6763-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>5.5.0</version>
+            <version>5.6.1</version>
         </dependency>
 
         <dependency>
@@ -116,13 +110,14 @@
 
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
-            <artifactId>lavasrc</artifactId>
-            <version>4.7.0</version>
+            <artifactId>lavasrc-plugin</artifactId>
+            <version>4.8.0</version>
         </dependency>
+
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>protocol-jvm</artifactId>
-            <version>4.0.1</version>
+            <version>4.8.0</version>
         </dependency>
 
         <dependency>
