@@ -7,11 +7,9 @@ import Zenvibe.lavaplayer.PlayerManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
 import java.util.Objects;
 
+import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
 import static Zenvibe.lavaplayer.LastFMManager.sessionKeys;
 import static Zenvibe.managers.EmbedManager.toTimestamp;
 import static Zenvibe.Main.*;
@@ -50,6 +48,7 @@ public class CommandInfo extends BaseCommand {
         eb.appendDescription(event.localise("cmd.info.lastFMUsers", sessionKeys.size()));
         eb.appendDescription(event.localise("cmd.info.voiceChannels", vcCount));
         eb.appendDescription(event.localise("cmd.info.playingCount", playingCount));
+        eb.appendDescription(event.localise("cmd.info.dataSent", formatDataUsage()));
         eb.appendDescription(event.localise("cmd.info.gatewayPing", event.getJDA().getGatewayPing()));
         long time = currentTimeMillis();
         event.replyEmbeds(response -> {
@@ -57,6 +56,35 @@ public class CommandInfo extends BaseCommand {
             eb.appendDescription("\n-# " + event.getJDA().getSelfUser().getName() + " " + event.localise("cmd.info.version", botVersion));
             response.editMessageEmbeds(eb.build());
         }, eb.build());
+    }
+
+
+    private static String formatDataUsage() {
+        long totalBytes = totalBytesSent.get();
+
+        long bytes = totalBytes % 1024;
+        long kb = (totalBytes / 1024) % 1024;
+        long mb = (totalBytes / (1024L * 1024)) % 1024;
+        long gb = (totalBytes / (1024L * 1024 * 1024)) % 1024;
+        long tb = totalBytes / (1024L * 1024 * 1024 * 1024);
+
+        StringBuilder result = new StringBuilder();
+        if (tb > 0) {
+            result.append(tb).append("TB, ");
+        }
+        if (gb > 0 || tb > 0) {
+            result.append(gb).append("GB, ");
+        }
+        if (mb > 0 || gb > 0 || tb > 0) {
+            result.append(mb).append("MB, ");
+        }
+        if (kb > 0 || mb > 0 || gb > 0 || tb > 0) {
+            result.append(kb).append("KB");
+        } else {
+            result.append(bytes).append("B");
+        }
+
+        return result.toString();
     }
 
 

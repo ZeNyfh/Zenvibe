@@ -17,29 +17,6 @@ public class CommandSendUsage extends BaseCommand {
         return new Check[]{Check.IS_DEV};
     }
 
-    private static String formatDataUsage() {
-        long totalBytes = totalBytesSent.get();
-        long bytes = totalBytes % 1024;
-        long kb = (totalBytes / 1024) % 1024;
-        long mb = (totalBytes / (1024 * 1024)) % 1024;
-        long gb = totalBytes / (1024 * 1024 * 1024);
-
-        StringBuilder result = new StringBuilder();
-        if (gb > 0) {
-            result.append(gb).append("GB, ");
-        }
-        if (mb > 0 || gb > 0) {
-            result.append(mb).append("MB, ");
-        }
-        if (kb > 0 || mb > 0 || gb > 0) {
-            result.append(kb).append("KB");
-        } else {
-            result.append(bytes).append(" bytes");
-        }
-
-        return result.toString();
-    }
-
     @Override
     public void execute(CommandEvent event) {
         Long[] values = (Long[]) commandUsageTracker.values().toArray(new Long[0]);
@@ -56,12 +33,11 @@ public class CommandSendUsage extends BaseCommand {
         eb.appendDescription("```js\n");
         for (int i = values.length - 1; i >= 0; i--) {
             String reference = InverseReference.get(values[i]).remove(0);
-            if (reference.endsWith("command")) continue;
+            if (reference.endsWith("command") || reference.equalsIgnoreCase("totalbytessent")) continue;
             eb.appendDescription(reference + ": " + values[i] + "\n");
         }
         eb.appendDescription("\nslashcommand: "+ commandUsageTracker.get("slashcommand"));
         eb.appendDescription("\nprefixcommand: "+ commandUsageTracker.get("prefixcommand"));
-        eb.appendDescription("\nAudio data sent: "+formatDataUsage());
 
         eb.appendDescription("```");
         event.replyEmbeds(eb.build());
