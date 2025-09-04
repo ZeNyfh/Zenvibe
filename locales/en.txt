@@ -78,6 +78,7 @@ cmd.info.registeredCommands=📑 **Registered Commands:** {1}\n\n // how many co
 cmd.info.lastFMUsers=🎧 **LastFM Users:** {1}\n\n // the amount of users using last.fm with zenvibe
 cmd.info.voiceChannels=🎵 **VCs:** {1}\n\n // how many voice channels the bot is in (VCs short for voice channels, feel free to change)
 cmd.info.playingCount=🔊 **Playing Count:** {1}\n\n // how many voice channels the bot is actually playing music in
+cmd.info.dataSent=📶 **Audio data transmitted:** {1}\n\n // amount of audio transmitted in TB/GB/MB/KB
 cmd.info.gatewayPing=⏱️ **Gateway Ping:** {1}ms\n\n // 204ms
 cmd.info.version=Version: {1} // 24.09.13 (a date but it's a version number)
 cmd.info.ping=**Ping:** {1}ms\n\n // ms here being short for milliseconds
