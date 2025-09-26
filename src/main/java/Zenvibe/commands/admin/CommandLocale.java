@@ -32,7 +32,7 @@ public class CommandLocale extends BaseCommand {
             return;
         }
 
-        String selectionValue = event.getInteraction().getSelectedOptions().get(0).getValue();
+        String selectionValue = event.getInteraction().getSelectedOptions().getFirst().getValue();
         config.put("Locale", selectionValue);
         Map<String, String> locale = languages.get(selectionValue);
         guildLocales.put(event.getGuild().getIdLong(), locale);
