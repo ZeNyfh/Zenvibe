@@ -9,6 +9,7 @@ dj users or roles and some other cool features for you to play with once you [in
 * Dutch 98% - etherealelysia
 * Danish 100% - SharkRainstorm
 * Spanish 98% - Nois
+* Bulgarian 100% - sami0505
 
 ## Requirements
 

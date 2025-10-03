@@ -45,7 +45,7 @@ public class CommandLocale extends BaseCommand {
         StringSelectMenu.Builder menu = StringSelectMenu.create("langlist");
         for (String langName : languages.keySet().stream().sorted().toList()) {
             String capitalisedLangName = Character.toUpperCase(langName.charAt(0)) + langName.substring(1);
-            menu.addOption(languages.get(langName).get("main.flag") + " " +  capitalisedLangName, langName.toLowerCase());
+            menu.addOption(languages.get(langName).get("main.flag") + " " +  capitalisedLangName, langName);
             builder.append(String.format("- %s %s\n", languages.get(langName).get("main.flag"), capitalisedLangName));
         }
         String languagesString = builder.toString().trim();
