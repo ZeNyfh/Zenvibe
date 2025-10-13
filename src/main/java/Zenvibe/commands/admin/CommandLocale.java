@@ -36,7 +36,7 @@ public class CommandLocale extends BaseCommand {
         config.put("Locale", selectionValue);
         Map<String, String> locale = languages.get(selectionValue);
         guildLocales.put(event.getGuild().getIdLong(), locale);
-        event.replyEmbeds(createQuickSuccess(managerLocalise("cmd.loc.languageChanged", locale, Character.toUpperCase(selectionValue.charAt(0)) + selectionValue.substring(1)), locale)).queue();
+        event.replyEmbeds(createQuickSuccess(managerLocalise("cmd.loc.languageChanged", locale, selectionValue), locale)).queue();
     }
 
     @Override
@@ -44,9 +44,8 @@ public class CommandLocale extends BaseCommand {
         StringBuilder builder = new StringBuilder();
         StringSelectMenu.Builder menu = StringSelectMenu.create("langlist");
         for (String langName : languages.keySet().stream().sorted().toList()) {
-            String capitalisedLangName = Character.toUpperCase(langName.charAt(0)) + langName.substring(1);
-            menu.addOption(languages.get(langName).get("main.flag") + " " +  capitalisedLangName, langName);
-            builder.append(String.format("- %s %s\n", languages.get(langName).get("main.flag"), capitalisedLangName));
+            menu.addOption(languages.get(langName).get("main.flag") + " " +  langName, langName);
+            builder.append(String.format("- %s %s\n", languages.get(langName).get("main.flag"), langName));
         }
         String languagesString = builder.toString().trim();
         event.replyEmbeds(response -> response.setActionRow(

@@ -98,6 +98,9 @@ public class Main extends ListenerAdapter {
     public static void main(String[] args) throws Exception {
         OutputLogger.Init("log.log");
 
+        System.out.println("中国");
+        System.out.println("中国".toUpperCase());
+
         prepareEnvironment();
         Dotenv dotenv = Dotenv.load();
         String botToken = dotenv.get("TOKEN");
