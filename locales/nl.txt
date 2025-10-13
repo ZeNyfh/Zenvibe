@@ -246,4 +246,4 @@ main.channel=**Kanaal**\n
 main.duration=**Duur**\n
 main.update=Er is een update uitgevoerd voor de bot, je wachtrij en instellingen zijn hersteld!\nAls je wilt zien wat er is veranderd, kun je lid worden van de ondersteuningsserver die te vinden is in de "Over mij" van de bot.
 main.flag=🇳🇱
-main.languageName=nederlands
+main.languageName=Nederlands

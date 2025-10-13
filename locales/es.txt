@@ -241,4 +241,4 @@ main.channel=**Canal**\n
 main.duration=**Duración**\n
 main.update=El bot ha sido actualizado, ¡tu cola y parámetros han sido restablecidos!\nSi deseas conocer los cambios, siéntete libre de unirte al servidor de soporte que se encuentra en la sección "sobre mí" del bot.
 main.flag=🇪🇸
-main.languageName=español
+main.languageName=Español

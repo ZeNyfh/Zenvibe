@@ -97,7 +97,7 @@ public class Main extends ListenerAdapter {
 
     public static void main(String[] args) throws Exception {
         OutputLogger.Init("log.log");
-
+        
         prepareEnvironment();
         Dotenv dotenv = Dotenv.load();
         String botToken = dotenv.get("TOKEN");
