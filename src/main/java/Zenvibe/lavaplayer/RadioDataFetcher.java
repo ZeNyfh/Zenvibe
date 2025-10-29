@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class RadioDataFetcher {
             ArrayList<String> dataList = new ArrayList<>();
             if (!Objects.requireNonNull(metadata).get(1).isEmpty()) {
                 int metaInt = Integer.parseInt(metadata.get(1));
-                URL audioURL = new URL(url);
+                URL audioURL = URI.create(url).toURL();
                 HttpURLConnection connection = (HttpURLConnection) audioURL.openConnection();
                 connection.setRequestProperty("Icy-Metadata", "1");
                 connection.connect();
