@@ -16,7 +16,6 @@ import static Zenvibe.Main.*;
 import static java.lang.System.currentTimeMillis;
 
 public class CommandInfo extends BaseCommand {
-    final int CommandCount = commandNames.size();
 
     @Override
     public void execute(CommandEvent event) {
@@ -44,7 +43,7 @@ public class CommandInfo extends BaseCommand {
         eb.appendDescription(event.localise("cmd.info.upTime", finalTime));
         eb.appendDescription(event.localise("cmd.info.discordServers", String.format("%,d", event.getJDA().getGuilds().size())));
         eb.appendDescription(event.localise("cmd.info.discordMembers", String.format("%,d", memberCount)));
-        eb.appendDescription(event.localise("cmd.info.registeredCommands", CommandCount));
+        eb.appendDescription(event.localise("cmd.info.registeredCommands", commandCount));
         eb.appendDescription(event.localise("cmd.info.lastFMUsers", sessionKeys.size()));
         eb.appendDescription(event.localise("cmd.info.voiceChannels", vcCount));
         eb.appendDescription(event.localise("cmd.info.playingCount", playingCount));
