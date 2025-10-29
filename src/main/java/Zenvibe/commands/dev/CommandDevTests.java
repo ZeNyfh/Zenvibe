@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.List;
+import java.util.Map;
 
 import static Zenvibe.Main.*;
 import static Zenvibe.managers.LocaleManager.languages;
@@ -83,7 +84,8 @@ public class CommandDevTests extends BaseCommand {
                         ).queue()
                 );
             } else if (command.equalsIgnoreCase("threads")) {
-                event.reply("Command thread count: " + commandThreads.getPoolSize() + " threads (" + commandThreads.getActiveCount() + " active)");
+                long[] threadCounts = countThreads();
+                event.reply("Virtual threads: " + threadCounts[0] + "\nActive threads: " + threadCounts[1]);
             } else if (command.equalsIgnoreCase("sleep")) {
                 final long sleepTime = args.length > 2 ? Long.parseLong(args[2]) : 5000;
                 event.reply("Sleeping for " + sleepTime + "ms...");
@@ -109,6 +111,15 @@ public class CommandDevTests extends BaseCommand {
                 event.reply("Unrecognised dev command " + command);
             }
         }
+    }
+
+
+    private static long[] countThreads() {
+        Map<Thread, ?> all = Thread.getAllStackTraces();
+        return new long[]{
+                all.keySet().stream().filter(Thread::isVirtual).count(),
+                all.keySet().stream().filter(thread -> thread.getState() != Thread.State.TERMINATED).count()
+        };
     }
 
     @Override

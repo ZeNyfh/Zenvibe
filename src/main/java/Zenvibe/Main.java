@@ -48,8 +48,8 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
@@ -57,11 +57,11 @@ import java.util.jar.JarFile;
 
 import static Zenvibe.CommandEvent.createQuickError;
 import static Zenvibe.CommandEvent.createQuickSuccess;
+import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
 import static Zenvibe.managers.GuildDataManager.GetConfig;
 import static Zenvibe.managers.GuildDataManager.SaveConfigs;
 import static Zenvibe.managers.LocaleManager.languages;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
-import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
 import static java.lang.System.currentTimeMillis;
 
 public class Main extends ListenerAdapter {
@@ -73,7 +73,7 @@ public class Main extends ListenerAdapter {
     public static final List<SlashCommandData> slashCommands = new ArrayList<>();
     public static final List<String> commandNames = new ArrayList<>(); // Purely for conflict detection
     public static final Map<BaseCommand, Map<Long, Long>> ratelimitTracker = new HashMap<>();
-    public static final ThreadPoolExecutor commandThreads = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+    public static final ExecutorService commandThreads = Executors.newVirtualThreadPerTaskExecutor();
     // guild management
     public static final Map<Long, List<Member>> skipCountGuilds = new HashMap<>();
     public static final List<Long> AutoplayGuilds = new ArrayList<>();
@@ -82,9 +82,9 @@ public class Main extends ListenerAdapter {
     public static final Map<Long, Integer> trackLoops = new HashMap<>();
     public static final Map<Long, List<String>> autoPlayedTracks = new HashMap<>();
     public static final Map<Long, Map<String, String>> guildLocales = new HashMap<>();
-
     private static final Map<String, Consumer<ButtonInteractionEvent>> ButtonInteractionMappings = new HashMap<>();
     private static final Map<String, Consumer<StringSelectInteractionEvent>> SelectionInteractionMappings = new HashMap<>();
+    public static int commandCount = 0;
     // config
     public static Color botColour = new Color(0, 0, 0);
     public static String ytRefreshToken = "";
@@ -97,7 +97,7 @@ public class Main extends ListenerAdapter {
 
     public static void main(String[] args) throws Exception {
         OutputLogger.Init("log.log");
-        
+
         prepareEnvironment();
         Dotenv dotenv = Dotenv.load();
         String botToken = dotenv.get("TOKEN");
@@ -244,6 +244,7 @@ public class Main extends ListenerAdapter {
             try {
                 registerCommand((BaseCommand) commandClass.getDeclaredConstructor().newInstance());
                 System.out.println("loaded command: " + commandClass.getSimpleName().substring(7));
+                commandCount++;
             } catch (Exception e) {
                 System.err.println("Unable to load command: " + commandClass);
                 e.printStackTrace();
@@ -254,6 +255,7 @@ public class Main extends ListenerAdapter {
     private static void setPresence() {
         bot.getPresence().setActivity(Activity.playing("Scrobble with last.fm with /scrobble! | playing music for " + bot.getGuilds().size() + " servers!"));
     }
+
     // Register hooks and timers as required
     private static void setupTasks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> GuildDataManager.SaveQueues(bot)));
@@ -268,7 +270,7 @@ public class Main extends ListenerAdapter {
             final File tempDir = new File("temp/");
 
             int cleanUpTime = 300; // 5 minutes
-            int ytdlpUpdateTime = 7200; // 2 hours
+            final int ytdlpUpdateTime = 7200; // 2 hours
 
             @Override
             public void run() {
@@ -511,6 +513,10 @@ public class Main extends ListenerAdapter {
         ButtonInteractionMappings.put(name, func);
     }
 
+    public static JDA getBot() {
+        return bot;
+    }
+
     private float handleRateLimit(BaseCommand Command, Member member) {
         long ratelimit = Command.getRatelimit();
         long lastRatelimit = ratelimitTracker.get(Command).getOrDefault(member.getIdLong(), 0L);
@@ -716,10 +722,6 @@ public class Main extends ListenerAdapter {
                 cleanUpAudioPlayer(event.getGuild());
             }
         }
-    }
-
-    public static JDA getBot() {
-        return bot;
     }
 
     public enum AudioFilters {
