@@ -11,14 +11,17 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.Button;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -78,10 +81,9 @@ public class CommandDevTests extends BaseCommand {
                 EmbedBuilder eb = new EmbedBuilder();
                 eb.setColor(botColour);
                 eb.setDescription("description text");
+                ActionRow row = ActionRow.of(Button.secondary("dev-button", "Me"), Button.secondary("not-dev-button", "Not Me"));
                 event.getChannel().sendMessageEmbeds(eb.build()).queue(
-                        message -> message.editMessageComponents().setActionRow(
-                                Button.secondary("dev-button", "Me"), Button.secondary("not-dev-button", "Not Me")
-                        ).queue()
+                        message -> message.editMessageComponents(row).queue()
                 );
             } else if (command.equalsIgnoreCase("threads")) {
                 long[] threadCounts = countThreads();

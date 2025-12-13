@@ -4,6 +4,7 @@ import Zenvibe.managers.GuildDataManager;
 import Zenvibe.managers.LocaleManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -11,7 +12,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.internal.interactions.InteractionHookImpl;
 import org.json.simple.JSONObject;
@@ -334,16 +334,16 @@ public class CommandEvent {
             }
         }
 
-        public void setActionRow(ItemComponent... actionRow) {
+        public void setActionRow(ActionRow... actionRow) {
             if (isSlash()) {
-                ((InteractionHookImpl) this.coreObject).editOriginalComponents().setActionRow(actionRow).queue();
+                ((InteractionHookImpl) this.coreObject).editOriginalComponents(actionRow).queue();
             } else {
-                ((Message) this.coreObject).editMessageComponents().setActionRow(actionRow).queue();
+                ((Message) this.coreObject).editMessageComponents(actionRow).queue();
             }
         }
 
-        public void setActionRow(List<ItemComponent> actionRow) {
-            setActionRow(actionRow.toArray(new ItemComponent[0]));
+        public void setActionRow(List<ActionRow> actionRow) {
+            setActionRow(actionRow.toArray(new ActionRow[0]));
         }
     }
 }

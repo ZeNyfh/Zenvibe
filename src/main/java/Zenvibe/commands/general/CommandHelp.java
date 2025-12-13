@@ -6,8 +6,8 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import static Zenvibe.managers.LocaleManager.managerLocalise;
 import static Zenvibe.Main.*;
 
 public class CommandHelp extends BaseCommand {
-    final List<ItemComponent> CategoryButtons = new ArrayList<>();
+    final List<Button> CategoryButtons = new ArrayList<>();
 
     public String getCommands(Category category) {
         StringBuilder Commands = new StringBuilder();
@@ -95,7 +95,7 @@ public class CommandHelp extends BaseCommand {
         Map<String, String> lang = guildLocales.get(Objects.requireNonNull(event.getGuild()).getIdLong());
         eb.setColor(botColour);
         eb.setFooter(lang.get("cmd.help.footer")); // Syntax: "<>" is a required argument, "[]" is an optional argument. "()" is an alternate word for the command.
-        Category ButtonCategory = Category.valueOf(Objects.requireNonNull(event.getButton().getId()).split("help-")[1]);
+        Category ButtonCategory = Category.valueOf(Objects.requireNonNull(event.getButton().getCustomId()).split("help-")[1]);
         BuildEmbedFromCategory(eb, ButtonCategory, Objects.requireNonNull(event.getGuild()).getIdLong());
         event.getInteraction().editMessageEmbeds().setEmbeds(eb.build()).queue();
     }
@@ -136,7 +136,7 @@ public class CommandHelp extends BaseCommand {
             }
             embed.setFooter(event.localise("cmd.help.originalFooter"));
         }
-        event.replyEmbeds(a -> a.setActionRow(CategoryButtons), embed.build());
+        event.replyEmbeds(a -> a.setActionRow(ActionRow.of(CategoryButtons)), embed.build());
     }
 
     @Override

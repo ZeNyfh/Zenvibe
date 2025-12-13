@@ -12,7 +12,8 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -29,9 +30,9 @@ public class CommandQueue extends BaseCommand {
         final BlockingQueue<AudioTrack> Queue = manager.scheduler.queue;
         Map<String, String> lang = guildLocales.get(event.getGuild().getIdLong());
         int newPageNumber = 1;
-        if (Objects.equals(event.getButton().getId(), "forward")) {
+        if (Objects.equals(event.getButton().getCustomId(), "forward")) {
             newPageNumber = queuePages.getOrDefault(event.getGuild().getIdLong(), 1) + 1;
-        } else if (Objects.equals(event.getButton().getId(), "backward")) {
+        } else if (Objects.equals(event.getButton().getCustomId(), "backward")) {
             newPageNumber = queuePages.getOrDefault(event.getGuild().getIdLong(), 1) - 1;
         }
         int maxPage = (Queue.size() + 4) / 5;
@@ -124,7 +125,7 @@ public class CommandQueue extends BaseCommand {
         embed.setColor(botColour);
         if (track != null && PlayerManager.getInstance().getThumbURL(track) != null)
             embed.setThumbnail(PlayerManager.getInstance().getThumbURL(track));
-        event.replyEmbeds(message -> message.setActionRow(Button.secondary("backward", "◀"), Button.secondary("forward", "▶")), embed.build());
+        event.replyEmbeds(message -> message.setActionRow(ActionRow.of(Button.secondary("backward", "◀"), Button.secondary("forward", "▶"))), embed.build());
     }
 
     @Override

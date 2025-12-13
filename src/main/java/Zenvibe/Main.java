@@ -661,7 +661,7 @@ public class Main extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        String buttonID = Objects.requireNonNull(event.getInteraction().getButton().getId());
+        String buttonID = Objects.requireNonNull(event.getInteraction().getButton().getCustomId());
         for (String name : ButtonInteractionMappings.keySet()) {
             if (name.equalsIgnoreCase(buttonID)) {
                 try {
@@ -678,7 +678,7 @@ public class Main extends ListenerAdapter {
 
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
-        String selectionID = event.getInteraction().getComponent().getId();
+        String selectionID = event.getInteraction().getComponent().getCustomId();
         for (String name : SelectionInteractionMappings.keySet()) {
             if (name.equalsIgnoreCase(selectionID)) {
                 try {

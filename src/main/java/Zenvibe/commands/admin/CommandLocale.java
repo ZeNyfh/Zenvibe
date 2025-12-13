@@ -4,7 +4,8 @@ import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.selections.StringSelectMenu;
 import org.json.simple.JSONObject;
 
 import java.util.Map;
@@ -49,7 +50,7 @@ public class CommandLocale extends BaseCommand {
         }
         String languagesString = builder.toString().trim();
         event.replyEmbeds(response -> response.setActionRow(
-                menu.build()), createQuickEmbed(event.localise("cmd.loc.list"), languagesString));
+                ActionRow.of(menu.build())), createQuickEmbed(event.localise("cmd.loc.list"), languagesString));
     }
 
     @Override
