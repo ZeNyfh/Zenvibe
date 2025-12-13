@@ -94,6 +94,7 @@ public class Main extends ListenerAdapter {
     public static boolean ignoreFiles = false;
     public static JSONObject commandUsageTracker;
     private static JDA bot;
+    private static boolean isIDE = false;
 
     public static void main(String[] args) throws Exception {
         OutputLogger.Init("log.log");
@@ -206,6 +207,7 @@ public class Main extends ListenerAdapter {
         try {
             jarFile = new JarFile(tempJarPath.substring(5));
         } catch (FileNotFoundException ignored) {
+            isIDE = true;
             System.out.println("detected process in IDE, registering commands in a different way...");
             Enumeration<URL> resources = ClassLoader.getSystemClassLoader().getResources("");
             while (resources.hasMoreElements()) {
@@ -229,6 +231,7 @@ public class Main extends ListenerAdapter {
             }
         }
         if (jarFile != null) {
+            isIDE = false;
             Enumeration<JarEntry> resources = jarFile.entries();
             while (resources.hasMoreElements()) {
                 JarEntry url = resources.nextElement();
@@ -726,5 +729,9 @@ public class Main extends ListenerAdapter {
 
     public enum AudioFilters {
         Vibrato, Timescale
+    }
+
+    public static boolean isIDE() {
+        return isIDE;
     }
 }

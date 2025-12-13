@@ -1,5 +1,6 @@
 package Zenvibe.managers;
 
+import Zenvibe.Main;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import org.json.simple.JSONArray;
@@ -120,7 +121,9 @@ public class LocaleManager {
                         System.err.println("## " + flag + " " + fileSplit[fileSplit.length - 1] + " is missing keys.");
                         isMissing = true;
                     }
-                    System.err.println("- ENGLISH KEY: " + languages.get("english").get(k).replaceAll("%(.)\\$s", "{$1}"));
+                    String englishKeyValue = languages.get("english").get(k).replaceAll("%(.)\\$s", "{$1}");
+                    if (!Main.isIDE()) englishKeyValue = englishKeyValue.substring(0, 47) + "..."; // only print full message in IDE for debugging.
+                    System.err.println("- ENGLISH KEY: " + englishKeyValue);
                     System.err.println("  - MISSING KEY: " + k);
                     localeMap.put(k, languages.get("english").getOrDefault(k, k)); // if the language is missing anything, fallback to english.
                 }
