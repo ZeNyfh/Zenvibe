@@ -131,8 +131,7 @@ public class Main extends ListenerAdapter {
         //bot.getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + bot.getGuilds().size() + " servers!"));
         //bot.getPresence().setActivity(Activity.playing(String.format("music for %,d servers! | " + readableBotPrefix + " help", bot.getGuilds().size())));
         for (Guild guild : bot.getGuilds()) {
-            trackLoops.put(guild.getIdLong(), 0);
-            autoPlayedTracks.put(guild.getIdLong(), new ArrayList<>());
+            initialiseGuildState(guild);
         }
         setupTasks();
         recoverQueues();
@@ -640,17 +639,26 @@ public class Main extends ListenerAdapter {
 
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
-        trackLoops.put(event.getGuild().getIdLong(), 0);
+        try {
+            JSONObject config = GuildDataManager.CreateGuildConfig(event.getGuild().getIdLong());
+            Map<String, String> locale = languages.get(config.get("Locale"));
+            guildLocales.put(event.getGuild().getIdLong(), Objects.requireNonNullElse(locale, languages.get("english")));
+        } catch (IOException e) {
+            e.printStackTrace();
+            guildLocales.putIfAbsent(event.getGuild().getIdLong(), languages.get("english"));
+        }
+        initialiseGuildState(event.getGuild());
+        // ensure audio manager has a registered send handler before the first play command.
+        PlayerManager.getInstance().getMusicManager(event.getGuild());
         setPresence();
 
         //event.getJDA().getPresence().setActivity(Activity.playing("use /language to change the language! | playing music for " + getBot().getGuilds().size() + " servers!"));
         //event.getJDA().getPresence().setActivity(Activity.playing(String.format("music for %,d servers! | " + readableBotPrefix + " help", event.getJDA().getGuilds().size())));
-        try {
-            GuildDataManager.CreateGuildConfig(event.getGuild().getIdLong());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        guildLocales.putIfAbsent(event.getGuild().getIdLong(), languages.get("english"));
+    }
+
+    private static void initialiseGuildState(Guild guild) {
+        trackLoops.put(guild.getIdLong(), 0);
+        autoPlayedTracks.putIfAbsent(guild.getIdLong(), new ArrayList<>());
     }
 
     @Override
