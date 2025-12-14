@@ -122,7 +122,9 @@ public class LocaleManager {
                         isMissing = true;
                     }
                     String englishKeyValue = languages.get("english").get(k).replaceAll("%(.)\\$s", "{$1}");
-                    if (!Main.isIDE()) englishKeyValue = englishKeyValue.substring(0, 47) + "..."; // only print full message in IDE for debugging.
+                    if (englishKeyValue.length() > 46) {
+                        if (!Main.isIDE()) englishKeyValue = englishKeyValue.substring(0, 47) + "..."; // only print full message in IDE for debugging.
+                    }
                     System.err.println("- ENGLISH KEY: " + englishKeyValue);
                     System.err.println("  - MISSING KEY: " + k);
                     localeMap.put(k, languages.get("english").getOrDefault(k, k)); // if the language is missing anything, fallback to english.
