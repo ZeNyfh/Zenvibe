@@ -97,7 +97,7 @@
         <dependency>
             <groupId>dev.arbjerg</groupId>
             <artifactId>lavaplayer</artifactId>
-            <version>66ae62fd8e0fb9c97e0db020b06b91e05f4a6763-SNAPSHOT</version>
+            <version>608f47e91f7bc54f6f73b83acf5e9ff07c3ee0f6-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -115,24 +115,6 @@
         <dependency>
             <groupId>club.minnced</groupId>
             <artifactId>jdave-native-linux-x86-64</artifactId>
-            <version>0.1.7</version>
-        </dependency>
-
-        <dependency>
-            <groupId>club.minnced</groupId>
-            <artifactId>jdave-native-linux-aarch64</artifactId>
-            <version>0.1.7</version>
-        </dependency>
-
-        <dependency>
-            <groupId>club.minnced</groupId>
-            <artifactId>jdave-native-win-x86-64</artifactId>
-            <version>0.1.7</version>
-        </dependency>
-
-        <dependency>
-            <groupId>club.minnced</groupId>
-            <artifactId>jdave-native-darwin</artifactId>
             <version>0.1.7</version>
         </dependency>
 
