@@ -5,12 +5,14 @@ import Zenvibe.lavaplayer.LastFMManager;
 import Zenvibe.lavaplayer.PlayerManager;
 import Zenvibe.managers.GuildDataManager;
 import Zenvibe.managers.LocaleManager;
+import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.audio.AudioModuleConfig;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
@@ -117,6 +119,8 @@ public class Main extends ListenerAdapter {
 
         Message.suppressContentIntentWarning();
         bot = JDABuilder.create(botToken, Arrays.asList(INTENTS))
+                .setAudioModuleConfig(new AudioModuleConfig()
+                        .withDaveSessionFactory(new JDaveSessionFactory()))
                 .enableCache(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE)
                 .disableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.ONLINE_STATUS, CacheFlag.EMOJI, CacheFlag.STICKER, CacheFlag.SCHEDULED_EVENTS)
                 .addEventListeners(new Main())

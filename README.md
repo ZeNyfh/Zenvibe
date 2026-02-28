@@ -13,7 +13,7 @@ dj users or roles and some other cool features for you to play with once you [in
 
 ## Requirements
 
-* [JDK 21](https://adoptium.net/temurin/releases/?version=21&package=jdk)
+* [JDK 25](https://adoptium.net/temurin/releases/?version=25&package=jdk)
 
 ## Usage
 
@@ -24,7 +24,9 @@ Run the bot using the latest included .jar file in releases or compile the jar y
 
 ## Java Installation
 
-JDK 21 can be acquired from [Temurin by Adoptium](https://adoptium.net/temurin/releases/?version=21&package=jdk) or from other trusted sources.
+JDK 25 can be acquired from [Temurin by Adoptium](https://adoptium.net/temurin/releases/?version=25&package=jdk) or from other trusted sources.
+
+When launching manually with `java -jar`, add `--enable-native-access=ALL-UNNAMED` if your runtime does not honor the manifest `Enable-Native-Access` entry.
 
 ## Note / Help
 
