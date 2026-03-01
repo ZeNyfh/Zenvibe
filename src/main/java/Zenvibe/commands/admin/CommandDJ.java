@@ -68,20 +68,26 @@ public class CommandDJ extends BaseCommand {
     }
 
     private void formatRoleList(CommandEvent event, StringBuilder builder, List<String> roles) {
-        int count = 0;
-        for (Object roleObj : roles) {
-            count++;
-            long roleId = (long) roleObj;
+        boolean firstRole = true;
+        for (String roleObj : roles) {
+            long roleId;
+            try {
+                roleId = Long.parseLong(roleObj);
+            } catch (NumberFormatException exception) {
+                continue;
+            }
+
+            if (!firstRole) {
+                builder.append(", ");
+            }
             
             if (roleId == event.getGuild().getIdLong()) {
                 builder.append("@everyone");
             } else {
                 builder.append("<@&").append(roleId).append(">");
             }
-            
-            if (count != roles.size()) {
-                builder.append(", ");
-            }
+
+            firstRole = false;
         }
     }
 
@@ -145,17 +151,21 @@ public class CommandDJ extends BaseCommand {
         JSONArray djUsers = (JSONArray) config.get("DJUsers");
 
         for (long memberId : targets.memberIds()) {
-            if (isAdding && !djUsers.contains(memberId)) {
-                djUsers.add(memberId);
+            String memberIdText = String.valueOf(memberId);
+            if (isAdding && !djUsers.contains(memberIdText) && !djUsers.contains(memberId)) {
+                djUsers.add(memberIdText);
             } else if (!isAdding) {
+                djUsers.remove(memberIdText);
                 djUsers.remove(memberId);
             }
         }
         
         for (long roleId : targets.roleIds()) {
-            if (isAdding && !djRoles.contains(roleId)) {
-                djRoles.add(roleId);
+            String roleIdText = String.valueOf(roleId);
+            if (isAdding && !djRoles.contains(roleIdText) && !djRoles.contains(roleId)) {
+                djRoles.add(roleIdText);
             } else if (!isAdding) {
+                djRoles.remove(roleIdText);
                 djRoles.remove(roleId);
             }
         }
