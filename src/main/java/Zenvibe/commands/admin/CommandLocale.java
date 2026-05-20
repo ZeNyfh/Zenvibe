@@ -3,9 +3,9 @@ package Zenvibe.commands.admin;
 import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import org.json.simple.JSONObject;
 
 import java.util.Map;
@@ -13,11 +13,12 @@ import java.util.Objects;
 
 import static Zenvibe.CommandEvent.createQuickError;
 import static Zenvibe.CommandEvent.createQuickSuccess;
+import static Zenvibe.Main.guildLocales;
+import static Zenvibe.Main.registerSelectionInteraction;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.GuildDataManager.GetGuildConfig;
 import static Zenvibe.managers.LocaleManager.languages;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
-import static Zenvibe.Main.*;
 
 public class CommandLocale extends BaseCommand {
 
@@ -45,7 +46,7 @@ public class CommandLocale extends BaseCommand {
         StringBuilder builder = new StringBuilder();
         StringSelectMenu.Builder menu = StringSelectMenu.create("langlist");
         for (String langName : languages.keySet().stream().sorted().toList()) {
-            menu.addOption(languages.get(langName).get("main.flag") + " " +  langName, langName);
+            menu.addOption(languages.get(langName).get("main.flag") + " " + langName, langName);
             builder.append(String.format("- %s %s\n", languages.get(langName).get("main.flag"), langName));
         }
         String languagesString = builder.toString().trim();

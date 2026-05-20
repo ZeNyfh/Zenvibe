@@ -3,19 +3,19 @@ package Zenvibe.commands.general;
 import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.components.actionrow.ActionRow;
-import net.dv8tion.jda.api.components.buttons.Button;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static Zenvibe.managers.LocaleManager.managerLocalise;
 import static Zenvibe.Main.*;
+import static Zenvibe.managers.LocaleManager.managerLocalise;
 
 public class CommandHelp extends BaseCommand {
     final List<Button> CategoryButtons = new ArrayList<>();
@@ -74,7 +74,7 @@ public class CommandHelp extends BaseCommand {
                         if (j == 0) continue;
                         String alias = Command.getNames()[j];
                         aliases.append("`").append(alias).append("`");
-                        if (j+1 != Command.getNames().length) {
+                        if (j + 1 != Command.getNames().length) {
                             aliases.append(" | ");
                         }
                     }
