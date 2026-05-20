@@ -9,9 +9,10 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import java.util.List;
 
-import static Zenvibe.managers.EmbedManager.createQuickEmbed;
-import static Zenvibe.Main.*;
+import static Zenvibe.Main.AutoplayGuilds;
+import static Zenvibe.Main.autoPlayedTracks;
 import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
+import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 
 public class CommandAutoplay extends BaseCommand {
     @Override

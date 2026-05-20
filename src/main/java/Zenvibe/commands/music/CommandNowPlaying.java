@@ -13,8 +13,8 @@ import net.dv8tion.jda.api.EmbedBuilder;
 
 import java.util.Objects;
 
-import static Zenvibe.managers.EmbedManager.toSimpleTimestamp;
 import static Zenvibe.Main.*;
+import static Zenvibe.managers.EmbedManager.toSimpleTimestamp;
 
 public class CommandNowPlaying extends BaseCommand {
     @Override
