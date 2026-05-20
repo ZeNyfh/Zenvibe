@@ -172,7 +172,7 @@ public class Main extends ListenerAdapter {
             System.out.println(env.getName() + " doesn't exist, creating now.");
             ignoreFiles = env.createNewFile();
             FileWriter writer = new FileWriter(".env");
-            writer.write("# This is the bot token, it needs to be set.\nTOKEN=\n# This is the hex value for the bot colour\nCOLOUR=\n# These 2 are required for spotify support with the bot.\nSPOTIFYCLIENTID=\nSPOTIFYCLIENTSECRET=\n# This is the last.fm API key for some functions of zenvibe\nLASTFMTOKEN=# This is the last.fm API Secret, only used for scrobbling.\nLASTFMSECRET=");
+            writer.write("# This is the bot token, it needs to be set.\nTOKEN=\n# This is the hex value for the bot colour\nCOLOUR=\n# These 2 are only needed if SPOTIFYUSECLIENTCREDENTIALS=true.\nSPOTIFYCLIENTID=\nSPOTIFYCLIENTSECRET=\n# Spotify Tokener is required for anonymous/account Spotify web tokens.\nSPOTIFYTOKENERENDPOINT=http://localhost:8080/api/token\n# Prefer Spotify's web/partner API over the developer API.\nSPOTIFYPREFERPARTNERAPI=true\n# Keep false unless the Spotify app owner has Premium.\nSPOTIFYUSECLIENTCREDENTIALS=false\n# Optional sp_dc cookie value for account-backed Spotify features.\nSPOTIFYSPDC=\n# Optional Spotify market/country code.\nSPOTIFYCOUNTRYCODE=gb\n# This is the last.fm API key for some functions of zenvibe\nLASTFMTOKEN=\n# This is the last.fm API Secret, only used for scrobbling.\nLASTFMSECRET=");
             writer.close();
         }
         if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
