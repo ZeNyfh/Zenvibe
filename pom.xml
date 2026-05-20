@@ -97,25 +97,25 @@
         <dependency>
             <groupId>dev.arbjerg</groupId>
             <artifactId>lavaplayer</artifactId>
-            <version>608f47e91f7bc54f6f73b83acf5e9ff07c3ee0f6-SNAPSHOT</version>
+            <version>d2e2949f67612c0b5ccb23205d83d0d386cf552e-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>6.3.1</version>
+            <version>6.4.1</version>
         </dependency>
 
         <dependency>
             <groupId>club.minnced</groupId>
             <artifactId>jdave-api</artifactId>
-            <version>0.1.7</version>
+            <version>0.1.8</version>
         </dependency>
 
         <dependency>
             <groupId>club.minnced</groupId>
             <artifactId>jdave-native-linux-x86-64</artifactId>
-            <version>0.1.7</version>
+            <version>0.1.8</version>
         </dependency>
 
         <dependency>
@@ -127,31 +127,31 @@
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>lavasrc-plugin</artifactId>
-            <version>4.8.0</version>
+            <version>4.8.2</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>protocol-jvm</artifactId>
-            <version>4.8.0</version>
+            <version>4.8.2</version>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.17</version>
+            <version>2.0.18</version>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>2.0.17</version>
+            <version>2.0.18</version>
         </dependency>
 
         <dependency>
             <groupId>dev.lavalink.youtube</groupId>
             <artifactId>v2</artifactId>
-            <version>1.16.0</version>
+            <version>1.18.1</version>
         </dependency>
 
         <dependency>
