@@ -155,20 +155,39 @@ public class CommandStateChecker {
         JSONArray DJUsers = (JSONArray) config.get("DJUsers");
         boolean check = false;
         for (Object DJRole : DJRoles) {
-            if ((long) DJRole == guild.getIdLong() || member.getRoles().contains(guild.getJDA().getRoleById((Long) DJRole))) {
+            Long roleId = parseSnowflake(DJRole);
+            if (roleId == null) {
+                continue;
+            }
+            if (roleId == guild.getIdLong() || member.getRoles().contains(guild.getJDA().getRoleById(roleId))) {
                 check = true;
                 break;
             }
         }
         if (!check) {
             for (Object DJUser : DJUsers) {
-                if (DJUser.equals(member.getIdLong())) {
+                Long userId = parseSnowflake(DJUser);
+                if (userId != null && userId == member.getIdLong()) {
                     check = true;
                     break;
                 }
             }
         }
         return new CheckResult(check, event.localise("statecheck.noDJ"));
+    }
+
+    private static Long parseSnowflake(Object snowflake) {
+        if (snowflake instanceof Number number) {
+            return number.longValue();
+        }
+        if (snowflake instanceof String string) {
+            try {
+                return Long.parseLong(string);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private static CheckResult IsChannelBlocked(CommandEvent event) {
