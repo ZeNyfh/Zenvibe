@@ -19,3 +19,4 @@ src/main/resources/META-INF/MANIFEST.MF
 !.idea/codeStyles
 !.idea/misc.xml
 
+build.sh
