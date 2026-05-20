@@ -66,11 +66,30 @@ public class PlayerManager {
         youtubeAudioSourceManager.useOauth2(ytRefreshToken, false);
         this.audioPlayerManager.registerSourceManager(youtubeAudioSourceManager);
 
-        String spotifyClientID = Dotenv.load().get("SPOTIFYCLIENTID");
-        String spotifyClientSecret = Dotenv.load().get("SPOTIFYCLIENTSECRET");
+        Dotenv dotenv = Dotenv.load();
+        String spotifyClientID = dotenv.get("SPOTIFYCLIENTID");
+        String spotifyClientSecret = dotenv.get("SPOTIFYCLIENTSECRET");
+        String spotifyTokenerEndpoint = dotenv.get("SPOTIFYTOKENERENDPOINT");
+        String spotifySpDc = dotenv.get("SPOTIFYSPDC");
+        String spotifyCountryCode = getOptionalEnv(dotenv, "SPOTIFYCOUNTRYCODE", "gb");
+        boolean spotifyUseClientCredentials = Boolean.parseBoolean(getOptionalEnv(dotenv, "SPOTIFYUSECLIENTCREDENTIALS", "false"));
+        boolean spotifyPreferPartnerApi = Boolean.parseBoolean(getOptionalEnv(dotenv, "SPOTIFYPREFERPARTNERAPI", String.valueOf(!isBlank(spotifyTokenerEndpoint))));
+
+        if (!spotifyUseClientCredentials && !isBlank(spotifyTokenerEndpoint)) {
+            spotifyClientID = null;
+            spotifyClientSecret = null;
+        }
 
         try {
-            this.audioPlayerManager.registerSourceManager(new SpotifySourceManager(null, spotifyClientID, spotifyClientSecret, "gb", audioPlayerManager));
+            SpotifySourceManager spotifySourceManager = new SpotifySourceManager(null, spotifyClientID, spotifyClientSecret, spotifyCountryCode, audioPlayerManager);
+            if (!isBlank(spotifyTokenerEndpoint)) {
+                spotifySourceManager.setCustomTokenEndpoint(spotifyTokenerEndpoint);
+            }
+            if (!isBlank(spotifySpDc)) {
+                spotifySourceManager.setSpDc(spotifySpDc);
+            }
+            spotifySourceManager.setPreferPartnerApi(spotifyPreferPartnerApi);
+            this.audioPlayerManager.registerSourceManager(spotifySourceManager);
             hasSpotify = true;
         } catch (Exception exception) {
             System.err.println("Spotify manager was unable to load due to a complication. Continuing without it...\nError: " + exception);
@@ -82,6 +101,15 @@ public class PlayerManager {
 
         AudioSourceManagers.registerRemoteSources(this.audioPlayerManager);
         AudioSourceManagers.registerLocalSource(this.audioPlayerManager);
+    }
+
+    private static String getOptionalEnv(Dotenv dotenv, String key, String defaultValue) {
+        String value = dotenv.get(key);
+        return isBlank(value) ? defaultValue : value;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     /**
