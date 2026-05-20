@@ -22,6 +22,29 @@ If there is no .env file, try running the bot once. It will proceed to create an
 
 Run the bot using the latest included .jar file in releases or compile the jar yourself from source.
 
+## Spotify Setup
+
+Spotify support uses [Spotify Tokener](https://github.com/topi314/spotify-tokener) for Spotify's anonymous/account web tokens.
+
+Start the tokener service:
+
+```bash
+docker compose up -d spotify-tokener
+```
+
+Then set these values in `.env`:
+
+```dotenv
+SPOTIFYCLIENTID=your_spotify_client_id
+SPOTIFYCLIENTSECRET=your_spotify_client_secret
+SPOTIFYTOKENERENDPOINT=http://localhost:8080/api/token
+SPOTIFYPREFERPARTNERAPI=true
+SPOTIFYUSECLIENTCREDENTIALS=false
+SPOTIFYCOUNTRYCODE=gb
+```
+
+Keep `SPOTIFYUSECLIENTCREDENTIALS=false` unless the owner of the Spotify app has Premium. For account-backed Spotify features, also set `SPOTIFYSPDC` to the value of your Spotify `sp_dc` cookie from `https://open.spotify.com`.
+
 ## Java Installation
 
 JDK 25 can be acquired from [Temurin by Adoptium](https://adoptium.net/temurin/releases/?version=25&package=jdk) or from other trusted sources.
