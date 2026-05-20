@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.components.buttons.Button;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
+import static Zenvibe.CommandEvent.createQuickError;
 import static Zenvibe.managers.EmbedManager.toTimestamp;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
 import static Zenvibe.Main.*;
@@ -29,6 +30,18 @@ public class CommandQueue extends BaseCommand {
         final GuildMusicManager manager = PlayerManager.getInstance().getMusicManager(Objects.requireNonNull(event.getGuild()));
         final BlockingQueue<AudioTrack> Queue = manager.scheduler.queue;
         Map<String, String> lang = guildLocales.get(event.getGuild().getIdLong());
+        if (Queue.isEmpty()) {
+            event.getInteraction().editMessageEmbeds(createQuickError(managerLocalise("cmd.q.empty", lang), lang)).queue();
+            return;
+        }
+        if (manager.audioPlayer.getPlayingTrack() == null) {
+            System.out.println("WARNING: No active song despite populated queue");
+            manager.scheduler.startNextTrackIfIdle();
+        }
+        if (Queue.isEmpty()) {
+            event.getInteraction().editMessageEmbeds(createQuickError(managerLocalise("cmd.q.empty", lang), lang)).queue();
+            return;
+        }
         int newPageNumber = 1;
         if (Objects.equals(event.getButton().getCustomId(), "forward")) {
             newPageNumber = queuePages.getOrDefault(event.getGuild().getIdLong(), 1) + 1;
@@ -49,15 +62,14 @@ public class CommandQueue extends BaseCommand {
             AudioTrackInfo trackInfo = Objects.requireNonNull(getTrackFromQueue(event.getGuild(), j)).getInfo();
             eb.appendDescription(j + 1 + ". [" + trackInfo.title + "](" + trackInfo.uri + ")\n");
         }
-        final AudioTrack track = manager.audioPlayer.getPlayingTrack();
-        if (track == null) {
-            System.out.println("WARNING: No active song despite populated queue");
-        } else {
+        AudioTrack track = manager.audioPlayer.getPlayingTrack();
+        if (track != null) {
             eb.setTitle(managerLocalise("cmd.q.nowPlaying", lang, track.getInfo().title), track.getInfo().uri);
             if (PlayerManager.getInstance().getThumbURL(track) != null)
                 eb.setThumbnail(PlayerManager.getInstance().getThumbURL(track));
+        } else {
+            eb.setTitle(managerLocalise("cmd.q.nowPlaying", lang, managerLocalise("main.unknown", lang)));
         }
-        eb.setTitle(managerLocalise("cmd.q.nowPlaying", lang, Objects.requireNonNull(track).getInfo().title), track.getInfo().uri);
         eb.setFooter(managerLocalise("cmd.q.queueInfoFooter", lang, Queue.size(), newPageNumber, maxPage, toTimestamp(queueTimeLength, event.getGuild().getIdLong())));
         eb.setColor(botColour);
         event.getInteraction().editMessageEmbeds(eb.build()).queue();
@@ -77,6 +89,10 @@ public class CommandQueue extends BaseCommand {
     public void execute(CommandEvent event) {
         final GuildMusicManager musicManager = PlayerManager.getInstance().getMusicManager(event.getGuild());
         final AudioPlayer audioPlayer = musicManager.audioPlayer;
+        if (audioPlayer.getPlayingTrack() == null && !musicManager.scheduler.queue.isEmpty()) {
+            System.out.println("WARNING: No active song despite populated queue");
+            musicManager.scheduler.startNextTrackIfIdle();
+        }
         List<AudioTrack> queue = new ArrayList<>(musicManager.scheduler.queue);
         if (queue.isEmpty()) {
             event.replyEmbeds(event.createQuickError(event.localise("cmd.q.empty")));
@@ -85,12 +101,12 @@ public class CommandQueue extends BaseCommand {
         EmbedBuilder embed = new EmbedBuilder();
         AudioTrack track = audioPlayer.getPlayingTrack();
 
-        if (track == null) {
-            System.out.println("WARNING: No active song despite populated queue");
-        } else {
+        if (track != null) {
             String title = track.getInfo().title;
             if (track.getInfo().title == null) title = event.localise("cmd.q.unknownTitle");
             embed.setTitle(event.localise("cmd.q.nowPlaying", title), track.getInfo().uri);
+        } else {
+            embed.setTitle(event.localise("cmd.q.nowPlaying", event.localise("main.unknown")));
         }
 
         int queueLength = queue.size();
