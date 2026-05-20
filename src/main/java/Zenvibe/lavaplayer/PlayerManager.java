@@ -4,7 +4,6 @@ import Zenvibe.CommandEvent;
 import com.github.natanbc.lavadsp.timescale.TimescalePcmAudioFilter;
 import com.github.natanbc.lavadsp.vibrato.VibratoPcmAudioFilter;
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager;
-import com.github.topi314.lavasrc.ytdlp.YtdlpAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.filter.AudioFilter;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -16,6 +15,8 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.*;
+import dev.lavalink.youtube.clients.skeleton.Client;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -24,28 +25,32 @@ import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static Zenvibe.CommandEvent.createQuickError;
+import static Zenvibe.Main.*;
 import static Zenvibe.managers.EmbedManager.sanitise;
 import static Zenvibe.managers.EmbedManager.toTimestamp;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
-import static Zenvibe.Main.*;
 
 /**
  * Handles audio player functionality and user interfacing of the bot for those actions, E.g. playing song(s), and outputting embed messages
  * and system logs where necessary.
  */
 public class PlayerManager {
+    private static final int FALLBACKCOUNT = 1;
+
     private static final Map<String, Pattern> patterns = new HashMap<>() {{
         put("Spotify", Pattern.compile("<img src=\"([^\"]+)\" width=\""));
         put("SoundCloud", Pattern.compile("\"thumbnail_url\":\"([^\"]+)\",\""));
@@ -62,7 +67,16 @@ public class PlayerManager {
         this.musicManagers = new HashMap<>();
         this.audioPlayerManager = new DefaultAudioPlayerManager();
 
-        YoutubeAudioSourceManager youtubeAudioSourceManager = new YoutubeAudioSourceManager();
+        Client[] youtubeClients = new Client[]{
+                new MusicWithThumbnail(),
+                new TvHtml5SimplyWithThumbnail(),
+                new MWebWithThumbnail(),
+                new AndroidVrWithThumbnail(),
+                new WebWithThumbnail(),
+                new WebEmbeddedWithThumbnail(),
+                new Tv()
+        };
+        YoutubeAudioSourceManager youtubeAudioSourceManager = new YoutubeAudioSourceManager(true, youtubeClients);
         youtubeAudioSourceManager.useOauth2(ytRefreshToken, false);
         this.audioPlayerManager.registerSourceManager(youtubeAudioSourceManager);
 
@@ -99,7 +113,10 @@ public class PlayerManager {
         this.audioPlayerManager.registerSourceManager(new TwitchStreamAudioSourceManager());
         this.audioPlayerManager.registerSourceManager(new BandcampAudioSourceManager(true));
 
-        AudioSourceManagers.registerRemoteSources(this.audioPlayerManager);
+        AudioSourceManagers.registerRemoteSources(
+                this.audioPlayerManager,
+                com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class
+        );
         AudioSourceManagers.registerLocalSource(this.audioPlayerManager);
     }
 
@@ -116,7 +133,7 @@ public class PlayerManager {
      * Returns a <code>PlayerManager</code> instance if one exists. Otherwise it will instantiate and return one.
      * Prevents multiple instances of <code>PlayerManager</code>.
      *
-     * @return  A <code>PlayerManager</code> instace.
+     * @return A <code>PlayerManager</code> instace.
      */
     public synchronized static PlayerManager getInstance() {
         if (INSTANCE == null) {
@@ -125,12 +142,39 @@ public class PlayerManager {
         return INSTANCE;
     }
 
+    private static boolean isTimeoutFailure(FriendlyException exception) {
+        Throwable current = exception;
+        while (current != null) {
+            if (current instanceof java.net.SocketTimeoutException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.toLowerCase().contains("read timed out")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static String getSearchFallback(String trackUrl) {
+        if (trackUrl.startsWith(YoutubeAudioSourceManager.SEARCH_PREFIX)) {
+            return YoutubeAudioSourceManager.MUSIC_SEARCH_PREFIX + trackUrl.substring(YoutubeAudioSourceManager.SEARCH_PREFIX.length());
+        }
+        return null;
+    }
+
+    private static boolean isSearchLoad(String trackUrl) {
+        return trackUrl.startsWith(YoutubeAudioSourceManager.SEARCH_PREFIX)
+                || trackUrl.startsWith(YoutubeAudioSourceManager.MUSIC_SEARCH_PREFIX);
+    }
+
     /**
      * Returns a <code>GuildMusicManager</code> of the <code>guild</code> specified, if it has been assigned one.
      * Otherwise, a new <code>GuildMusicManager</code> will be instantiated, added to the <code>musicManagers</code> map and returned.
      *
-     * @param guild     A <code>Guild</code> object.
-     * @return          A <code>GuildMusicManager</code> object.
+     * @param guild A <code>Guild</code> object.
+     * @return A <code>GuildMusicManager</code> object.
      */
     public synchronized GuildMusicManager getMusicManager(Guild guild) {
         return this.musicManagers.computeIfAbsent(guild.getIdLong(), (guildId) -> {
@@ -154,8 +198,8 @@ public class PlayerManager {
      * Creates an <code>EmbedBuilder</code> object using the <code>audioTrack</code>'s information.
      * The embed's duration in the description might be "Unknown" if the track's <code>length</code> is too high (5+ days) or low.
      *
-     * @param audioTrack    An <code>AudioTrack</code> object.
-     * @return              An <code>EmbedBuilder</code> object.
+     * @param audioTrack An <code>AudioTrack</code> object.
+     * @return An <code>EmbedBuilder</code> object.
      */
     public EmbedBuilder createTrackEmbed(AudioTrack audioTrack) {
         EmbedBuilder embed = new EmbedBuilder();
@@ -184,9 +228,9 @@ public class PlayerManager {
      * Sends an embed into a given event or channel, either replying to the <code>CommandEvent</code> or simply sending
      * the embed without replying to anything.
      *
-     * @param eventOrChannel    The event or channel in which the embed is to be sent.
-     * @param embed             The embed to be sent in the <code>eventOrChannel</code>.
-     * @param forceSendChannel  Whether to force a send without replying to the <code>CommandEvent</code>.
+     * @param eventOrChannel   The event or channel in which the embed is to be sent.
+     * @param embed            The embed to be sent in the <code>eventOrChannel</code>.
+     * @param forceSendChannel Whether to force a send without replying to the <code>CommandEvent</code>.
      */
     private void replyWithEmbed(Object eventOrChannel, MessageEmbed embed, boolean forceSendChannel) {
         if (eventOrChannel instanceof CommandEvent) {
@@ -204,11 +248,11 @@ public class PlayerManager {
      * Attempts to load, queue and play a track or playlist from a given URL, and (optionally) sends an embed in the given
      * <code>eventOrChannel</code> based on the results of the method.
      *
-     * @param eventOrChannel    The event or channel of the <code>CommandEvent</code>.
-     * @param trackUrl          The URL of the track(s) to be played.
-     * @param sendEmbed         Whether to create and send an embed in the <code>eventOrChannel</code> about the song(s) queued (or the error if one occurred).
-     * @return                  A <code>CompletableFuture</code> that contains the <code>LoadResult</code> of the method.
-     * @throws AssertionError   If <code>eventOrChannel</code> is not an event or channel (mind blown).
+     * @param eventOrChannel The event or channel of the <code>CommandEvent</code>.
+     * @param trackUrl       The URL of the track(s) to be played.
+     * @param sendEmbed      Whether to create and send an embed in the <code>eventOrChannel</code> about the song(s) queued (or the error if one occurred).
+     * @return A <code>CompletableFuture</code> that contains the <code>LoadResult</code> of the method.
+     * @throws AssertionError If <code>eventOrChannel</code> is not an event or channel (mind blown).
      */
     public CompletableFuture<LoadResult> loadAndPlay(Object eventOrChannel, String trackUrl, boolean sendEmbed) {
         assert (eventOrChannel instanceof CommandEvent || eventOrChannel instanceof GuildMessageChannelUnion);
@@ -241,14 +285,14 @@ public class PlayerManager {
 
             if (eventOrChannel instanceof CommandEvent event) {
                 event.replyEmbeds(response -> {
-                    loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, response);
+                    loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, response, 0);
                 }, loadingEmbed.build());
             } else {
                 ((GuildMessageChannelUnion) eventOrChannel).sendMessageEmbeds(loadingEmbed.build()).queue();
-                loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null);
+                loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null, 0);
             }
         } else {
-            loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null);
+            loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null, 0);
         }
 
         return loadResultFuture;
@@ -259,7 +303,7 @@ public class PlayerManager {
      */
     private void loadAndPlayWithResponse(Object eventOrChannel, String trackUrl, Guild commandGuild,
                                          Map<String, String> locale, CompletableFuture<LoadResult> loadResultFuture,
-                                         CommandEvent.Response loadingResponse) {
+                                         CommandEvent.Response loadingResponse, int searchFallbacks) {
         final GuildMusicManager musicManager = this.getMusicManager(commandGuild);
 
         this.audioPlayerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
@@ -294,10 +338,10 @@ public class PlayerManager {
                     audioTrack.setUserData(new TrackData(eventOrChannel));
                 }
                 if (!tracks.isEmpty()) {
-                    AudioTrack track = tracks.getFirst();
+                    AudioTrack track = audioPlaylist.getSelectedTrack() == null ? tracks.getFirst() : audioPlaylist.getSelectedTrack();
                     if (autoplaying)
                         track = tracks.get(ThreadLocalRandom.current().nextInt(2, 4)); // this is to prevent looping tracks
-                    if (tracks.size() == 1 || audioPlaylist.getName().contains("Search results for:") || autoplaying) {
+                    if (tracks.size() == 1 || audioPlaylist.isSearchResult() || isSearchLoad(trackUrl) || autoplaying) {
                         musicManager.scheduler.queue(track);
                         if (loadingResponse != null && !autoplaying) {
                             track.setUserData(new TrackData(eventOrChannel));
@@ -358,6 +402,12 @@ public class PlayerManager {
             public void loadFailed(FriendlyException e) {
                 System.err.println("Track failed to load.\nURL: \"" + trackUrl + "\"\nReason: " + e.getMessage());
                 skipCountGuilds.remove(commandGuild.getIdLong());
+                String fallbackTrackUrl = getSearchFallback(trackUrl);
+                if (isTimeoutFailure(e) && fallbackTrackUrl != null && searchFallbacks < FALLBACKCOUNT) {
+                    System.err.println("Retrying YouTube search through YouTube Music after timeout.\nURL: \"" + trackUrl + "\"");
+                    loadAndPlayWithResponse(eventOrChannel, fallbackTrackUrl, commandGuild, locale, loadResultFuture, loadingResponse, searchFallbacks + 1);
+                    return;
+                }
 
                 final StringBuilder loadFailedBuilder = new StringBuilder();
                 if (e.getMessage().toLowerCase().contains("search response: 400")) {
@@ -372,13 +422,11 @@ public class PlayerManager {
         });
     }
 
-
-
     /**
      * Returns the URL of the thumbnail for the current <code>AudioTrack</code>, checking if it is a valid image URL.
      *
      * @param track The <code>AudioTrack</code> object whose information will be used to search for a thumbnail.
-     * @return      A string URL of the thumbnail image (or <code>null</code> when one was not found for any reason).
+     * @return A string URL of the thumbnail image (or <code>null</code> when one was not found for any reason).
      */
     @Nullable
     public String getThumbURL(AudioTrack track) {
@@ -464,6 +512,7 @@ public class PlayerManager {
 
         /**
          * Sets the current <code>LoadResult</code> instance's <code>songWasPlayed</code> property to the given value.
+         *
          * @param songWasPlayed Whether this entry of <code>LoadResult</code> will cause a song to be played.
          */
         LoadResult(boolean songWasPlayed) {
@@ -485,7 +534,7 @@ public class PlayerManager {
         /**
          * Constructs a new <code>TrackUserData</code> object.
          *
-         * @param eventOrChannel    The event or channel where the <code>CommandEvent</code> was called.
+         * @param eventOrChannel The event or channel where the <code>CommandEvent</code> was called.
          */
         public TrackData(Object eventOrChannel) {
             this.eventOrChannel = eventOrChannel;
