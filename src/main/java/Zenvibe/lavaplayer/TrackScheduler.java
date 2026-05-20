@@ -38,13 +38,29 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void queue(AudioTrack track) {
-        if (!this.player.startTrack(track, true)) {
+        if (this.player.startTrack(track, true)) {
+            this.player.setPaused(false);
+        } else {
             this.queue.offer(track);
         }
     }
 
     public void nextTrack() {
-        this.player.startTrack(this.queue.poll(), false);
+        AudioTrack nextTrack = this.queue.poll();
+        if (nextTrack == null) {
+            this.player.stopTrack();
+            return;
+        }
+        this.player.startTrack(nextTrack, false);
+        this.player.setPaused(false);
+    }
+
+    public boolean startNextTrackIfIdle() {
+        if (this.player.getPlayingTrack() != null || this.queue.isEmpty()) {
+            return false;
+        }
+        nextTrack();
+        return this.player.getPlayingTrack() != null;
     }
 
     @Override
