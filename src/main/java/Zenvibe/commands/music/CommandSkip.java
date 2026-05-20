@@ -16,11 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static Zenvibe.Main.*;
+import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.toSimpleTimestamp;
-import static Zenvibe.Main.*;
-import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 
 public class CommandSkip extends BaseCommand {
     @Override

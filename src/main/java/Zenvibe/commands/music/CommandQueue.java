@@ -9,19 +9,19 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.components.actionrow.ActionRow;
-import net.dv8tion.jda.api.components.buttons.Button;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 import static Zenvibe.CommandEvent.createQuickError;
+import static Zenvibe.Main.*;
 import static Zenvibe.managers.EmbedManager.toTimestamp;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
-import static Zenvibe.Main.*;
 
 public class CommandQueue extends BaseCommand {
     private static final Map<Long, Integer> queuePages = new HashMap<>();

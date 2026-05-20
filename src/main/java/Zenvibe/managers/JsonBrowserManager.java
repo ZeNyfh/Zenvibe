@@ -12,7 +12,8 @@ import java.util.function.Function;
 
 public class JsonBrowserManager {
 
-    private JsonBrowserManager() {}
+    private JsonBrowserManager() {
+    }
 
     public static <T> List<T> asList(JsonBrowser node, Function<? super JsonBrowser, ? extends T> mapper) throws IOException {
         Objects.requireNonNull(mapper, "mapper");

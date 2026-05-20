@@ -27,7 +27,7 @@ public class CommandDJ extends BaseCommand {
     @Override
     public void execute(CommandEvent event) throws IOException {
         String[] args = event.getArgs();
-        
+
         if (args.length == 1 || "list".equalsIgnoreCase(args[1])) {
             handleListDJs(event);
         } else if ("add".equalsIgnoreCase(args[1])) {
@@ -43,24 +43,24 @@ public class CommandDJ extends BaseCommand {
         JsonBrowser config = JsonBrowser.parse(event.getConfig().toJSONString()); // slowly moving towards the JsonBrowser...
         List<String> djRoles = asStringList(config.get("DJRoles"));
         List<String> djUsers = asStringList(config.get("DJUsers"));
-        
+
         EmbedBuilder eb = new EmbedBuilder();
         StringBuilder builder = new StringBuilder();
-        
+
         builder.append(event.localise("cmd.dj.roleList"));
         if (djRoles.isEmpty()) {
             builder.append(event.localise("cmd.dj.roleListEmpty"));
         } else {
             formatRoleList(event, builder, djRoles);
         }
-        
+
         builder.append(event.localise("cmd.dj.userList"));
         if (djUsers.isEmpty()) {
             builder.append(event.localise("cmd.dj.roleListEmpty"));
         } else {
             formatUserList(builder, djUsers);
         }
-        
+
         eb.setColor(botColour);
         eb.setTitle(String.format(event.localise("cmd.dj.guildDJs"), event.getGuild().getName()));
         eb.appendDescription(builder);
@@ -80,7 +80,7 @@ public class CommandDJ extends BaseCommand {
             if (!firstRole) {
                 builder.append(", ");
             }
-            
+
             if (roleId == event.getGuild().getIdLong()) {
                 builder.append("@everyone");
             } else {
@@ -96,7 +96,7 @@ public class CommandDJ extends BaseCommand {
         for (Object userObj : users) {
             count++;
             builder.append("<@").append(userObj).append(">");
-            
+
             if (count != users.size()) {
                 builder.append(", ");
             }
@@ -108,13 +108,13 @@ public class CommandDJ extends BaseCommand {
             event.replyEmbeds(event.createQuickError(event.localise("main.noPermission")));
             return;
         }
-        
+
         DJTargets targets = parseTargets(event);
         if (targets.isEmpty()) {
             event.replyEmbeds(event.createQuickError(event.localise("cmd.dj.notGiven")));
             return;
         }
-        
+
         applyChanges(event.getConfig(), targets, isAdding);
         String responseMessage = buildResponseMessage(event, targets);
         if (isAdding) {
@@ -127,14 +127,14 @@ public class CommandDJ extends BaseCommand {
     private DJTargets parseTargets(CommandEvent event) {
         List<Long> memberIds = new ArrayList<>();
         List<Long> roleIds = new ArrayList<>();
-        
+
         for (int i = 2; i < event.getArgs().length; i++) {
             String arg = event.getArgs()[i];
             Matcher matcher = MENTION_REGEX.matcher(arg);
-            
+
             if (matcher.matches()) {
                 long id = Long.parseLong(matcher.group(1));
-                
+
                 if (event.getGuild().getMemberById(id) != null) {
                     memberIds.add(id);
                 } else if (event.getGuild().getRoleById(id) != null) {
@@ -142,7 +142,7 @@ public class CommandDJ extends BaseCommand {
                 }
             }
         }
-        
+
         return new DJTargets(memberIds, roleIds);
     }
 
@@ -159,7 +159,7 @@ public class CommandDJ extends BaseCommand {
                 djUsers.remove(memberId);
             }
         }
-        
+
         for (long roleId : targets.roleIds()) {
             String roleIdText = String.valueOf(roleId);
             if (isAdding && !djRoles.contains(roleIdText) && !djRoles.contains(roleId)) {
@@ -174,9 +174,9 @@ public class CommandDJ extends BaseCommand {
     private String buildResponseMessage(CommandEvent event, DJTargets targets) {
         int memberCount = targets.memberIds().size();
         int roleCount = targets.roleIds().size();
-        
-        String memberText = memberCount == 1 
-                ? event.localise("cmd.dj.member") 
+
+        String memberText = memberCount == 1
+                ? event.localise("cmd.dj.member")
                 : event.localise("cmd.dj.member.plural");
 
         String roleText = roleCount == 1
@@ -191,12 +191,6 @@ public class CommandDJ extends BaseCommand {
             }
         } else {
             return String.format("%d %s", roleCount, roleText);
-        }
-    }
-
-    private record DJTargets(List<Long> memberIds, List<Long> roleIds) {
-        public boolean isEmpty() {
-            return memberIds.isEmpty() && roleIds.isEmpty();
         }
     }
 
@@ -238,5 +232,11 @@ public class CommandDJ extends BaseCommand {
     @Override
     public long getRatelimit() {
         return 1000;
+    }
+
+    private record DJTargets(List<Long> memberIds, List<Long> roleIds) {
+        public boolean isEmpty() {
+            return memberIds.isEmpty() && roleIds.isEmpty();
+        }
     }
 }

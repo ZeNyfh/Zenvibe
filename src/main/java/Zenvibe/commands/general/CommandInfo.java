@@ -9,13 +9,41 @@ import net.dv8tion.jda.api.entities.Guild;
 
 import java.util.Objects;
 
+import static Zenvibe.Main.*;
 import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
 import static Zenvibe.lavaplayer.LastFMManager.sessionKeys;
 import static Zenvibe.managers.EmbedManager.toTimestamp;
-import static Zenvibe.Main.*;
 import static java.lang.System.currentTimeMillis;
 
 public class CommandInfo extends BaseCommand {
+
+    private static String formatDataUsage() {
+        long totalBytes = totalBytesSent.get();
+
+        long bytes = totalBytes % 1024;
+        long kb = (totalBytes / 1024) % 1024;
+        long mb = (totalBytes / (1024L * 1024)) % 1024;
+        long gb = (totalBytes / (1024L * 1024 * 1024)) % 1024;
+        long tb = totalBytes / (1024L * 1024 * 1024 * 1024);
+
+        StringBuilder result = new StringBuilder();
+        if (tb > 0) {
+            result.append(tb).append("TB, ");
+        }
+        if (gb > 0 || tb > 0) {
+            result.append(gb).append("GB, ");
+        }
+        if (mb > 0 || gb > 0 || tb > 0) {
+            result.append(mb).append("MB, ");
+        }
+        if (kb > 0 || mb > 0 || gb > 0 || tb > 0) {
+            result.append(kb).append("KB");
+        } else {
+            result.append(bytes).append("B");
+        }
+
+        return result.toString();
+    }
 
     @Override
     public void execute(CommandEvent event) {
@@ -56,36 +84,6 @@ public class CommandInfo extends BaseCommand {
             response.editMessageEmbeds(eb.build());
         }, eb.build());
     }
-
-
-    private static String formatDataUsage() {
-        long totalBytes = totalBytesSent.get();
-
-        long bytes = totalBytes % 1024;
-        long kb = (totalBytes / 1024) % 1024;
-        long mb = (totalBytes / (1024L * 1024)) % 1024;
-        long gb = (totalBytes / (1024L * 1024 * 1024)) % 1024;
-        long tb = totalBytes / (1024L * 1024 * 1024 * 1024);
-
-        StringBuilder result = new StringBuilder();
-        if (tb > 0) {
-            result.append(tb).append("TB, ");
-        }
-        if (gb > 0 || tb > 0) {
-            result.append(gb).append("GB, ");
-        }
-        if (mb > 0 || gb > 0 || tb > 0) {
-            result.append(mb).append("MB, ");
-        }
-        if (kb > 0 || mb > 0 || gb > 0 || tb > 0) {
-            result.append(kb).append("KB");
-        } else {
-            result.append(bytes).append("B");
-        }
-
-        return result.toString();
-    }
-
 
     @Override
     public String[] getNames() {

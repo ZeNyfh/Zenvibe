@@ -274,9 +274,8 @@ public class Main extends ListenerAdapter {
         TimerTask task = new TimerTask() {
             final File updateFile = new File("update/bot.jar");
             final File tempDir = new File("temp/");
-
-            int cleanUpTime = 300; // 5 minutes
             final int ytdlpUpdateTime = 7200; // 2 hours
+            int cleanUpTime = 300; // 5 minutes
 
             @Override
             public void run() {
@@ -523,6 +522,15 @@ public class Main extends ListenerAdapter {
         return bot;
     }
 
+    private static void initialiseGuildState(Guild guild) {
+        trackLoops.put(guild.getIdLong(), 0);
+        autoPlayedTracks.putIfAbsent(guild.getIdLong(), new ArrayList<>());
+    }
+
+    public static boolean isIDE() {
+        return isIDE;
+    }
+
     private float handleRateLimit(BaseCommand Command, Member member) {
         long ratelimit = Command.getRatelimit();
         long lastRatelimit = ratelimitTracker.get(Command).getOrDefault(member.getIdLong(), 0L);
@@ -660,11 +668,6 @@ public class Main extends ListenerAdapter {
         //event.getJDA().getPresence().setActivity(Activity.playing(String.format("music for %,d servers! | " + readableBotPrefix + " help", event.getJDA().getGuilds().size())));
     }
 
-    private static void initialiseGuildState(Guild guild) {
-        trackLoops.put(guild.getIdLong(), 0);
-        autoPlayedTracks.putIfAbsent(guild.getIdLong(), new ArrayList<>());
-    }
-
     @Override
     public void onGuildLeave(@NotNull GuildLeaveEvent event) {
         trackLoops.remove(event.getGuild().getIdLong());
@@ -741,9 +744,5 @@ public class Main extends ListenerAdapter {
 
     public enum AudioFilters {
         Vibrato, Timescale
-    }
-
-    public static boolean isIDE() {
-        return isIDE;
     }
 }

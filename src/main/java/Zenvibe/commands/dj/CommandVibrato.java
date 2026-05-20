@@ -9,8 +9,8 @@ import com.github.natanbc.lavadsp.vibrato.VibratoPcmAudioFilter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
-import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.Main.AudioFilters;
+import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 
 public class CommandVibrato extends BaseCommand {
     @Override

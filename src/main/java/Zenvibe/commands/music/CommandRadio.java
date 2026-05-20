@@ -24,9 +24,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static Zenvibe.CommandStateChecker.PerformChecks;
+import static Zenvibe.Main.botColour;
+import static Zenvibe.Main.readableBotPrefix;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.sanitise;
-import static Zenvibe.Main.*;
 
 public class CommandRadio extends BaseCommand {
     private static final Pattern pattern = Pattern.compile("ga\\('send', 'event', 'tunein', 'playm3u', '([^']+)'\\);");

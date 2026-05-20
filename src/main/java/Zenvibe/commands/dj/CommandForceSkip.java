@@ -17,11 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static Zenvibe.Main.AutoplayGuilds;
+import static Zenvibe.Main.skipCountGuilds;
+import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.sanitise;
-import static Zenvibe.Main.*;
-import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 
 public class CommandForceSkip extends BaseCommand {
     @Override

@@ -3,30 +3,27 @@ package Zenvibe.commands.dev;
 import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
-import Zenvibe.managers.LocaleManager;
 import Zenvibe.lavaplayer.GuildMusicManager;
 import Zenvibe.lavaplayer.LastFMManager;
 import Zenvibe.lavaplayer.PlayerManager;
+import Zenvibe.managers.LocaleManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.components.buttons.Button;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static Zenvibe.Main.*;
-import static Zenvibe.managers.LocaleManager.languages;
 
 public class CommandDevTests extends BaseCommand {
     private static void writeGuilds(CommandEvent event) {
@@ -48,6 +45,14 @@ public class CommandDevTests extends BaseCommand {
             e.printStackTrace();
         }
         System.out.println(builder);
+    }
+
+    private static long[] countThreads() {
+        Map<Thread, ?> all = Thread.getAllStackTraces();
+        return new long[]{
+                all.keySet().stream().filter(Thread::isVirtual).count(),
+                all.keySet().stream().filter(thread -> thread.getState() != Thread.State.TERMINATED).count()
+        };
     }
 
     private void HandleButtonEvent(ButtonInteractionEvent event) {
@@ -113,15 +118,6 @@ public class CommandDevTests extends BaseCommand {
                 event.reply("Unrecognised dev command " + command);
             }
         }
-    }
-
-
-    private static long[] countThreads() {
-        Map<Thread, ?> all = Thread.getAllStackTraces();
-        return new long[]{
-                all.keySet().stream().filter(Thread::isVirtual).count(),
-                all.keySet().stream().filter(thread -> thread.getState() != Thread.State.TERMINATED).count()
-        };
     }
 
     @Override

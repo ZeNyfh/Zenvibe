@@ -22,8 +22,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static Zenvibe.Main.botPrefix;
+import static Zenvibe.Main.guildLocales;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
-import static Zenvibe.Main.*;
 
 // TODO: Purge this file and re-make the system to be better
 // (Basically, give the queueing responsibility back to the code that calls this)
@@ -97,6 +98,20 @@ public class CommandEvent {
         }
     }
 
+    public static MessageEmbed createQuickSuccess(String description, Map<String, String> lang) {
+        if (lang == null) {
+            return createQuickEmbed("✅ **Success**", description);
+        }
+        return createQuickEmbed("✅ **" + LocaleManager.managerLocalise("main.success", lang) + "**", description);
+    }
+
+    public static MessageEmbed createQuickError(String description, Map<String, String> lang) {
+        if (lang == null) {
+            return createQuickEmbed("❌ **Error**", description);
+        }
+        return createQuickEmbed("❌ **" + LocaleManager.managerLocalise("main.error", lang) + "**", description);
+    }
+
     /**
      * Localise function.
      * Takes a key value in the format (cmd.name.stringName) for example: "cmd.vol.tooHigh" which then takes all the arguments, it does String.format() in the backend.
@@ -119,22 +134,8 @@ public class CommandEvent {
         return createQuickEmbed("✅ **" + localise("main.success") + "**", description);
     }
 
-    public static MessageEmbed createQuickSuccess(String description, Map<String, String> lang) {
-        if (lang == null) {
-            return createQuickEmbed("✅ **Success**", description);
-        }
-        return createQuickEmbed("✅ **" + LocaleManager.managerLocalise("main.success", lang) + "**", description);
-    }
-
     public MessageEmbed createQuickError(String description) {
         return createQuickEmbed("❌ **" + localise("main.error") + "**", description);
-    }
-
-    public static MessageEmbed createQuickError(String description, Map<String, String> lang) {
-        if (lang == null) {
-            return createQuickEmbed("❌ **Error**", description);
-        }
-        return createQuickEmbed("❌ **" + LocaleManager.managerLocalise("main.error", lang) + "**", description);
     }
 
     public boolean isSlash() {

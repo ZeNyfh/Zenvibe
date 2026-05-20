@@ -4,8 +4,8 @@ import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
 
-import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.Main.LoopGuilds;
+import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 
 public class CommandLoop extends BaseCommand {
     @Override

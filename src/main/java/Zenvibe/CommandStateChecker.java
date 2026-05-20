@@ -20,29 +20,6 @@ import java.util.Objects;
 // A simple checker designed to check common cases in commands
 // Can either be called manually or handled automatically by overriding getChecks
 public class CommandStateChecker {
-    public enum Check {
-        IS_USER_IN_ANY_VC, IS_BOT_IN_ANY_VC, IS_IN_SAME_VC, TRY_JOIN_VC, IS_DJ, IS_CHANNEL_BLOCKED, IS_PLAYING, IS_DEV
-    }
-
-    public static final class CheckResult {
-        private final boolean succeeded;
-        private final String message;
-
-        public CheckResult(boolean s, String m) {
-            this.succeeded = s;
-            this.message = m;
-        }
-
-        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-        public boolean succeeded() {
-            return this.succeeded;
-        }
-
-        public String getMessage() {
-            return this.message;
-        }
-    }
-
     private static final CheckResult success = new CheckResult(true, "(You should never see this message)");
 
     public static CheckResult PerformChecks(CommandEvent event, Check... checks) {
@@ -72,23 +49,12 @@ public class CommandStateChecker {
         );
     }
 
-    // IS_USER_IN_ANY_VC -> Checks if the user is in any VC at all
-    // IS_BOT_IN_ANY_VC -> Checks if the bot is in any VC at all
-    // IS_IN_SAME_VC -> Checks if the user is in the same VC as the bot. If either is not in any VC, this fails
-    // TRY_JOIN_VC -> Checks if the user is in the same VC or, if not, attempts to join their VC if reasonable
-    // IS_DJ -> Checks if the user is eligible for DJ status
-    // IS_CHANNEL_BLOCKED -> Checks if the channel the command is in is blocked
-    // IS_PLAYING -> Checks if the bot is currently playing any audio
-    // IS_DEV -> Checks if the user invoking the command is defined as a developer
-
     private static CheckResult IsBotInAnyVc(CommandEvent event) {
         return new CheckResult(
                 Objects.requireNonNull(event.getGuild().getSelfMember().getVoiceState()).inAudioChannel(),
                 event.localise("statecheck.botNotInVC")
         );
     }
-
-    //-- The actual testing methods --//
 
     private static CheckResult IsInSameVc(CommandEvent event) {
         GuildVoiceState memberState = Objects.requireNonNull(event.getMember().getVoiceState());
@@ -102,6 +68,15 @@ public class CommandStateChecker {
         }
         return success;
     }
+
+    // IS_USER_IN_ANY_VC -> Checks if the user is in any VC at all
+    // IS_BOT_IN_ANY_VC -> Checks if the bot is in any VC at all
+    // IS_IN_SAME_VC -> Checks if the user is in the same VC as the bot. If either is not in any VC, this fails
+    // TRY_JOIN_VC -> Checks if the user is in the same VC or, if not, attempts to join their VC if reasonable
+    // IS_DJ -> Checks if the user is eligible for DJ status
+    // IS_CHANNEL_BLOCKED -> Checks if the channel the command is in is blocked
+    // IS_PLAYING -> Checks if the bot is currently playing any audio
+    // IS_DEV -> Checks if the user invoking the command is defined as a developer
 
     // This will cause the bot to join the VC if checks pass, so make sure this occurs later on
     private static CheckResult TryJoinVc(CommandEvent event) {
@@ -129,6 +104,8 @@ public class CommandStateChecker {
             return success;
         }
     }
+
+    //-- The actual testing methods --//
 
     private static CheckResult IsDJ(CommandEvent event) {
         Member member = event.getMember();
@@ -220,5 +197,28 @@ public class CommandStateChecker {
                 matchesAny = true;
 
         return new CheckResult(matchesAny, event.localise("statecheck.devOnly"));
+    }
+
+    public enum Check {
+        IS_USER_IN_ANY_VC, IS_BOT_IN_ANY_VC, IS_IN_SAME_VC, TRY_JOIN_VC, IS_DJ, IS_CHANNEL_BLOCKED, IS_PLAYING, IS_DEV
+    }
+
+    public static final class CheckResult {
+        private final boolean succeeded;
+        private final String message;
+
+        public CheckResult(boolean s, String m) {
+            this.succeeded = s;
+            this.message = m;
+        }
+
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+        public boolean succeeded() {
+            return this.succeeded;
+        }
+
+        public String getMessage() {
+            return this.message;
+        }
     }
 }

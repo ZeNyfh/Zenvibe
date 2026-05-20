@@ -7,8 +7,8 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static Zenvibe.managers.LocaleManager.getLocalisedTimeUnits;
 import static Zenvibe.Main.botColour;
+import static Zenvibe.managers.LocaleManager.getLocalisedTimeUnits;
 
 public class EmbedManager {
 
