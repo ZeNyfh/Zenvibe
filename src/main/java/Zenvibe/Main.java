@@ -212,13 +212,19 @@ public class Main extends ListenerAdapter {
         Dotenv dotenv = loadEnvironment();
         String colour = getEnvironmentValue(dotenv, "COLOUR");
         if (colour == null) {
-            System.err.println("Hex value COLOUR is not set in the process environment or " + new File(".env").getAbsolutePath() + " example: #FFCCEE");
+            System.err.println("Hex value COLOUR is not set in the process environment or " + new File(".env").getAbsolutePath() + " example: FFCCEE or #FFCCEE");
             throw new NullPointerException("COLOUR is not set");
         }
+
+        colour = colour.trim();
+        if (colour.matches("(?i)^[0-9a-f]{6}$")) {
+            colour = "#" + colour;
+        }
+
         try {
             botColour = Color.decode(colour);
         } catch (NumberFormatException exception) {
-            throw new NumberFormatException("Unable to successfully parse COLOUR as a colour: " + colour);
+            throw new NumberFormatException("Unable to successfully parse COLOUR as a colour: " + colour + ". Expected a six-digit hex value such as FFCCEE or #FFCCEE");
         }
 
         ytRefreshToken = getEnvironmentValue(dotenv, "YTREFRESHTOKEN");
