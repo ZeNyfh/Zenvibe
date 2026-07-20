@@ -97,7 +97,7 @@
         <dependency>
             <groupId>dev.arbjerg</groupId>
             <artifactId>lavaplayer</artifactId>
-            <version>d2e2949f67612c0b5ccb23205d83d0d386cf552e-SNAPSHOT</version>
+            <version>2.2.7</version>
         </dependency>
 
         <dependency>
