@@ -80,11 +80,11 @@ public class PlayerManager {
         youtubeAudioSourceManager.useOauth2(ytRefreshToken, false);
         this.audioPlayerManager.registerSourceManager(youtubeAudioSourceManager);
 
-        Dotenv dotenv = Dotenv.load();
-        String spotifyClientID = dotenv.get("SPOTIFYCLIENTID");
-        String spotifyClientSecret = dotenv.get("SPOTIFYCLIENTSECRET");
-        String spotifyTokenerEndpoint = dotenv.get("SPOTIFYTOKENERENDPOINT");
-        String spotifySpDc = dotenv.get("SPOTIFYSPDC");
+        Dotenv dotenv = loadEnvironment();
+        String spotifyClientID = getEnvironmentValue(dotenv, "SPOTIFYCLIENTID");
+        String spotifyClientSecret = getEnvironmentValue(dotenv, "SPOTIFYCLIENTSECRET");
+        String spotifyTokenerEndpoint = getEnvironmentValue(dotenv, "SPOTIFYTOKENERENDPOINT");
+        String spotifySpDc = getEnvironmentValue(dotenv, "SPOTIFYSPDC");
         String spotifyCountryCode = getOptionalEnv(dotenv, "SPOTIFYCOUNTRYCODE", "gb");
         boolean spotifyUseClientCredentials = Boolean.parseBoolean(getOptionalEnv(dotenv, "SPOTIFYUSECLIENTCREDENTIALS", "false"));
         boolean spotifyPreferPartnerApi = Boolean.parseBoolean(getOptionalEnv(dotenv, "SPOTIFYPREFERPARTNERAPI", String.valueOf(!isBlank(spotifyTokenerEndpoint))));
@@ -121,7 +121,7 @@ public class PlayerManager {
     }
 
     private static String getOptionalEnv(Dotenv dotenv, String key, String defaultValue) {
-        String value = dotenv.get(key);
+        String value = getEnvironmentValue(dotenv, key);
         return isBlank(value) ? defaultValue : value;
     }
 

@@ -186,10 +186,16 @@ public class CommandStateChecker {
     }
 
     private static CheckResult IsDev(CommandEvent event) { // Would BOT_ADMINS be more appropriate?
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = Main.loadEnvironment();
         var matchesAny = false;
 
-        long[] developers = Arrays.stream(dotenv.get("DEVELOPERS", "211789389401948160,260016427900076033").split(","))
+        String configuredDevelopers = Main.getEnvironmentValue(dotenv, "DEVELOPERS");
+        if (configuredDevelopers == null) {
+            configuredDevelopers = "211789389401948160,260016427900076033";
+        }
+
+        long[] developers = Arrays.stream(configuredDevelopers.split(","))
+                .map(String::trim)
                 .mapToLong(Long::parseLong).toArray(); // Preserve original IDs unless explicitly set by hoster
 
         for (long l : developers)

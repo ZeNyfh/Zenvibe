@@ -98,14 +98,38 @@ public class Main extends ListenerAdapter {
     private static JDA bot;
     private static boolean isIDE = false;
 
+    /**
+     * Loads .env values when the file exists, but also permits deployments
+     * that provide configuration only through process environment variables.
+     */
+    public static Dotenv loadEnvironment() {
+        return Dotenv.configure()
+                .ignoreIfMissing()
+                .load();
+    }
+
+    /**
+     * Process environment variables take precedence over values in .env.
+     * Blank values are treated as unset.
+     */
+    public static String getEnvironmentValue(Dotenv dotenv, String key) {
+        String systemValue = System.getenv(key);
+        if (systemValue != null && !systemValue.isBlank()) {
+            return systemValue;
+        }
+
+        String dotenvValue = dotenv.get(key);
+        return dotenvValue == null || dotenvValue.isBlank() ? null : dotenvValue;
+    }
+
     public static void main(String[] args) throws Exception {
         OutputLogger.Init("log.log");
 
         prepareEnvironment();
-        Dotenv dotenv = Dotenv.load();
-        String botToken = dotenv.get("TOKEN");
+        Dotenv dotenv = loadEnvironment();
+        String botToken = getEnvironmentValue(dotenv, "TOKEN");
         if (botToken == null) {
-            throw new NullPointerException("TOKEN is not set in the .env file");
+            throw new NullPointerException("TOKEN is not set in the process environment or .env file");
         }
         GuildDataManager.Init();
         commandUsageTracker = GetConfig("usage-stats");
@@ -185,20 +209,21 @@ public class Main extends ListenerAdapter {
                 writer.close();
             }
         }
-        Dotenv dotenv = Dotenv.load();
-        if (dotenv.get("COLOUR") == null) {
-            System.err.println("Hex value COLOUR is not set in " + new File(".env").getAbsolutePath() + " example: #FFCCEE");
-            throw new NullPointerException("COLOUR is not set in the .env file");
+        Dotenv dotenv = loadEnvironment();
+        String colour = getEnvironmentValue(dotenv, "COLOUR");
+        if (colour == null) {
+            System.err.println("Hex value COLOUR is not set in the process environment or " + new File(".env").getAbsolutePath() + " example: #FFCCEE");
+            throw new NullPointerException("COLOUR is not set");
         }
         try {
-            botColour = Color.decode(dotenv.get("COLOUR"));
+            botColour = Color.decode(colour);
         } catch (NumberFormatException exception) {
-            throw new NumberFormatException("Unable to successfully parse the COLOUR from the .env as a colour"); // Provide a more descriptive message
+            throw new NumberFormatException("Unable to successfully parse COLOUR as a colour: " + colour);
         }
-        try {
-            ytRefreshToken = dotenv.get("YTREFRESHTOKEN");
-        } catch (NumberFormatException exception) {
-            throw new NumberFormatException("Unable to get yt-refresh token.");
+
+        ytRefreshToken = getEnvironmentValue(dotenv, "YTREFRESHTOKEN");
+        if (ytRefreshToken == null) {
+            ytRefreshToken = "";
         }
     }
 

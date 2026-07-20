@@ -90,9 +90,9 @@ public class LastFMManager {
     private static String LASTFMSECRET = null;
 
     public static void Init() {
-        Dotenv dotenv = Dotenv.load();
-        String key = dotenv.get("LASTFMTOKEN");
-        String secret = dotenv.get("LASTFMSECRET");
+        Dotenv dotenv = loadEnvironment();
+        String key = getEnvironmentValue(dotenv, "LASTFMTOKEN");
+        String secret = getEnvironmentValue(dotenv, "LASTFMSECRET");
         if (key == null) {
             System.err.println("LASTFMTOKEN is not set in " + new File(".env").getAbsolutePath());
         } else {
