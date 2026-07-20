@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+.env
+*.jar
+artifacts
+config
+logs
+out
+resources
+target
+temp
+update
+data.csv
+guilds.csv
+start.sh
