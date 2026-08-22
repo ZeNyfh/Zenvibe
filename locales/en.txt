@@ -43,8 +43,8 @@ cmd.dj.member.plural=members
 cmd.dj.role=role
 cmd.dj.role.plural=roles
 cmd.dj.membersAndRoles={1} {2} and {3} {4} // count of members, mentions, number, role/s and member names
-cmd.dj.added=Added {1} to the DJ list. // user/role name
-cmd.dj.removed=Removed {1} from the DJ list. // user/role name
+cmd.dj.added={1} have been added to the DJ list. // user/role name
+cmd.dj.removed={1} have been removed from the DJ list. // user/role name
 cmd.dj.invalidArgs=Invalid Arguments.
 
 cmd.fs.failedToFind=Autoplay failed to find {1}\n // song title

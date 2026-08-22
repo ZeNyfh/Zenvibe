@@ -22,8 +22,7 @@ import static Zenvibe.Main.botColour;
 import static Zenvibe.managers.JsonBrowserManager.asStringList;
 
 public class CommandDJ extends BaseCommand {
-    private static final Pattern MENTION_REGEX = Pattern.compile("(?:<@&?)?(\\d+)>?");
-
+    private static final Pattern MENTION_REGEX = Pattern.compile("<@(&)?(\\d+)>");
     @Override
     public void execute(CommandEvent event) throws IOException {
         String[] args = event.getArgs();
@@ -116,7 +115,7 @@ public class CommandDJ extends BaseCommand {
         }
 
         applyChanges(event.getConfig(), targets, isAdding);
-        String responseMessage = buildResponseMessage(event, targets);
+        String responseMessage = buildAddRemoveResponse(event, targets);
         if (isAdding) {
             event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.dj.added", responseMessage)));
         } else {
@@ -133,12 +132,12 @@ public class CommandDJ extends BaseCommand {
             Matcher matcher = MENTION_REGEX.matcher(arg);
 
             if (matcher.matches()) {
-                long id = Long.parseLong(matcher.group(1));
-
-                if (event.getGuild().getMemberById(id) != null) {
-                    memberIds.add(id);
-                } else if (event.getGuild().getRoleById(id) != null) {
+                long id = Long.parseLong(matcher.group(2));
+                
+                if (matcher.group(1) != null) {
                     roleIds.add(id);
+                } else {
+                    memberIds.add(id);
                 }
             }
         }
@@ -171,27 +170,20 @@ public class CommandDJ extends BaseCommand {
         }
     }
 
-    private String buildResponseMessage(CommandEvent event, DJTargets targets) {
-        int memberCount = targets.memberIds().size();
-        int roleCount = targets.roleIds().size();
+    private String buildAddRemoveResponse(CommandEvent event, DJTargets targets) {
+        StringBuilder response = new StringBuilder();
 
-        String memberText = memberCount == 1
-                ? event.localise("cmd.dj.member")
-                : event.localise("cmd.dj.member.plural");
-
-        String roleText = roleCount == 1
-                ? event.localise("cmd.dj.role")
-                : event.localise("cmd.dj.role.plural");
-
-        if (memberCount > 0) {
-            if (roleCount > 0) {
-                return event.localise("cmd.dj.membersAndRoles", memberCount, memberText, roleCount, roleText);
-            } else {
-                return String.format("%d %s", memberCount, memberText);
-            }
-        } else {
-            return String.format("%d %s", roleCount, roleText);
+        if (!targets.roleIds.isEmpty()) {
+            response.append(event.localise("cmd.dj.roleList"));
+            targets.roleIds.forEach(roleID -> response.append("<@&").append(roleID).append(">"));
         }
+
+        if (!targets.memberIds.isEmpty()) {
+            response.append(event.localise("cmd.dj.userList"));
+            targets.memberIds.forEach(userID -> response.append("<@").append(userID).append(">"));
+        }
+
+        return response.append("\n\n").toString();
     }
 
     @Override
