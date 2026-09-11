@@ -113,7 +113,7 @@ public class EmbedManager {
     }
 
     public static String sanitise(String str) {
-        String[] chars = new String[]{"_", "`", "#", "(", ")", "~"};
+        String[] chars = new String[]{"_", "`", "#", "~"};
 
         for (String c : chars) {
             if (str.contains(c)) {
