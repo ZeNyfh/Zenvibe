@@ -11,7 +11,7 @@ import java.util.Objects;
 
 import static Zenvibe.Main.*;
 import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
-import static Zenvibe.lavaplayer.LastFMManager.sessionKeys;
+import Zenvibe.managers.GuildDataManager;
 import static Zenvibe.managers.EmbedManager.toTimestamp;
 import static java.lang.System.currentTimeMillis;
 
@@ -72,7 +72,7 @@ public class CommandInfo extends BaseCommand {
         eb.appendDescription(event.localise("cmd.info.discordServers", String.format("%,d", event.getJDA().getGuilds().size())));
         eb.appendDescription(event.localise("cmd.info.discordMembers", String.format("%,d", memberCount)));
         eb.appendDescription(event.localise("cmd.info.registeredCommands", commandCount));
-        eb.appendDescription(event.localise("cmd.info.lastFMUsers", sessionKeys.size()));
+        eb.appendDescription(event.localise("cmd.info.lastFMUsers", GuildDataManager.database().lastFmUserCount()));
         eb.appendDescription(event.localise("cmd.info.voiceChannels", vcCount));
         eb.appendDescription(event.localise("cmd.info.playingCount", playingCount));
         eb.appendDescription(event.localise("cmd.info.dataSent", formatDataUsage()));
