@@ -70,6 +70,7 @@ cmd.info.discordServers=📡 **Servers:** {1}\n\n
 cmd.info.discordMembers=👤 **Gebruikers:** {1}\n\n
 cmd.info.registeredCommands=📑 **Geregistreerde opdrachten:** {1}\n\n
 cmd.info.voiceChannels=🎵 **Spraakkanalen:** {1}\n\n
+cmd.info.voiceUsers=🎭 **VC-gebruikers:** {1}\n\n
 cmd.info.playingCount=🔊 **Actieve afspelingen:** {1}\n\n
 cmd.info.gatewayPing=⏱️ **Gateway-ping:** {1}ms\n\n
 cmd.info.version=Versie: {1}

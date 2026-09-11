@@ -6,6 +6,9 @@ import Zenvibe.Main;
 import Zenvibe.lavaplayer.PlayerManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 
 import java.util.Objects;
 
@@ -48,12 +51,22 @@ public class CommandInfo extends BaseCommand {
     @Override
     public void execute(CommandEvent event) {
         int vcCount = 0;
+        int vcUserCount = 0;
         int memberCount = 0;
         int playingCount = 0;
 
         for (Guild guild : event.getJDA().getGuilds()) {
-            if (Objects.requireNonNull(guild.getSelfMember().getVoiceState()).inAudioChannel()) {
+            GuildVoiceState selfVoiceState = Objects.requireNonNull(guild.getSelfMember().getVoiceState());
+            if (selfVoiceState.inAudioChannel()) {
                 vcCount++;
+                AudioChannelUnion channel = selfVoiceState.getChannel();
+                if (channel != null) {
+                    for (Member member : channel.getMembers()) {
+                        if (!member.getUser().isBot()) {
+                            vcUserCount++;
+                        }
+                    }
+                }
             }
             if (PlayerManager.getInstance().getMusicManager(guild).audioPlayer.getPlayingTrack() != null) {
                 playingCount++;
@@ -74,6 +87,7 @@ public class CommandInfo extends BaseCommand {
         eb.appendDescription(event.localise("cmd.info.registeredCommands", commandCount));
         eb.appendDescription(event.localise("cmd.info.lastFMUsers", GuildDataManager.database().lastFmUserCount()));
         eb.appendDescription(event.localise("cmd.info.voiceChannels", vcCount));
+        eb.appendDescription(event.localise("cmd.info.voiceUsers", String.format("%,d", vcUserCount)));
         eb.appendDescription(event.localise("cmd.info.playingCount", playingCount));
         eb.appendDescription(event.localise("cmd.info.dataSent", formatDataUsage()));
         eb.appendDescription(event.localise("cmd.info.gatewayPing", event.getJDA().getGatewayPing()));

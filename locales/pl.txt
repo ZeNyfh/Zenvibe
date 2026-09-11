@@ -72,6 +72,7 @@ cmd.info.discordMembers=👤 **Użytkownicy:** {1}\n\n
 cmd.info.registeredCommands=📑 **Zarejestrowane komendy:** {1}\n\n
 cmd.info.lastFMUsers=🎧 **Użytkownicy Last.fm:** {1}\n\n // the amount of users using last.fm with zenvibe
 cmd.info.voiceChannels=🎵 **Kanały głosowe:** {1}\n\n
+cmd.info.voiceUsers=🎭 **Użytkownicy VC:** {1}\n\n
 cmd.info.playingCount=🔊 **Liczba odtwarzanych:** {1}\n\n
 cmd.info.dataSent=📶 **Przesłanych danych audio:** {1}\n\n
 cmd.info.gatewayPing=⏱️ **Ping bramy:** {1}ms\n\n

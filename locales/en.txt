@@ -77,6 +77,7 @@ cmd.info.discordMembers=👤 **Users:** {1}\n\n // the amount of total users
 cmd.info.registeredCommands=📑 **Registered Commands:** {1}\n\n // how many commands are registered
 cmd.info.lastFMUsers=🎧 **LastFM Users:** {1}\n\n // the amount of users using last.fm with zenvibe
 cmd.info.voiceChannels=🎵 **VCs:** {1}\n\n // how many voice channels the bot is in (VCs short for voice channels, feel free to change)
+cmd.info.voiceUsers=🎭 **VC Users:** {1}\n\n // how many non-bot users are in voice channels the bot is currently in
 cmd.info.playingCount=🔊 **Playing Count:** {1}\n\n // how many voice channels the bot is actually playing music in
 cmd.info.dataSent=📶 **Audio data transmitted:** {1}\n\n // amount of audio transmitted in TB/GB/MB/KB
 cmd.info.gatewayPing=⏱️ **Gateway Ping:** {1}ms\n\n // 204ms

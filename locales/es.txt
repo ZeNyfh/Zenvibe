@@ -62,6 +62,7 @@ cmd.info.discordServers=📡 **Servidores:** {1}\n\n
 cmd.info.discordMembers=👤 **Usuarios:** {1}\n\n
 cmd.info.registeredCommands=📑 **Comandos registrados:** {1}\n\n
 cmd.info.voiceChannels=🎵 **Canales de voz:** {1}\n\n
+cmd.info.voiceUsers=🎭 **Usuarios en VC:** {1}\n\n
 cmd.info.playingCount=🔊 **Reproducciones activas:** {1}\n\n
 cmd.info.gatewayPing=⏱️ **Ping de entrada:** {1}ms\n\n
 cmd.info.version=Versión: {1}
