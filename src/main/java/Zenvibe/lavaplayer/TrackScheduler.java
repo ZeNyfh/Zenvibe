@@ -71,6 +71,7 @@ public class TrackScheduler extends AudioEventAdapter {
 
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
+        logEarlyTrackFinish(track, endReason);
 
         if (!endReason.mayStartNext) {
             return;
@@ -132,6 +133,27 @@ public class TrackScheduler extends AudioEventAdapter {
         }
     }
 
+
+    private static void logEarlyTrackFinish(AudioTrack track, AudioTrackEndReason endReason) {
+        if (endReason != AudioTrackEndReason.FINISHED) {
+            return;
+        }
+        long pos = track.getPosition();
+        long duration = track.getDuration();
+        long metaLength = track.getInfo().length;
+        if (duration <= 0 || duration > 432000000L) {
+            return;
+        }
+        long shortfallMs = duration - pos;
+        if (shortfallMs <= 500) {
+            return;
+        }
+        System.err.println("Track finished early: " + track.getInfo().uri
+                + " pos=" + pos
+                + " duration=" + duration
+                + " metaLength=" + metaLength
+                + " shortfallMs=" + shortfallMs);
+    }
 
     private void updateNowPlayingForTrack(AudioTrack track) {
         PlayerManager.TrackData trackData = (PlayerManager.TrackData) track.getUserData();
