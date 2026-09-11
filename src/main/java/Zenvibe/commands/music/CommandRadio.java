@@ -16,6 +16,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +33,10 @@ import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.sanitise;
 
 public class CommandRadio extends BaseCommand {
-    private static final Pattern pattern = Pattern.compile("ga\\('send', 'event', 'tunein', 'playm3u', '([^']+)'\\);");
+    private static final Pattern PLAYLIST_PATTERN = Pattern.compile(
+            "playlistgenerator/\\?u=([^\"&]+)&(?:amp;)?t=\\.(m3u|pls)",
+            Pattern.CASE_INSENSITIVE);
+
     Map<String, String> radioLists = new HashMap<>() {{
         put("Heart", "https://media-ssl.musicradio.com/HeartLondon");
         put("1Mix Trance", "http://fr3.1mix.co.uk:8060/320");
@@ -49,29 +55,42 @@ public class CommandRadio extends BaseCommand {
     }};
 
     public static String getRadio(String search) throws IOException {
+        String query = search == null ? "" : search.trim().replace('+', ' ');
+        if (query.isEmpty()) {
+            return "None";
+        }
+
         URL url;
         try {
-            url = URI.create("https://www.internet-radio.com/search/?radio=" + search).toURL();
+            url = URI.create("https://www.internet-radio.com/search/?radio=" + URLEncoder.encode(query, StandardCharsets.UTF_8)).toURL();
         } catch (Exception e) {
             e.printStackTrace();
             return "None";
         }
+
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
+        connection.setInstanceFollowRedirects(true);
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+        connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
+
         StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
             for (String line; (line = reader.readLine()) != null; ) {
                 builder.append(line);
             }
         } catch (Exception ignored) {
             return "None";
+        } finally {
+            connection.disconnect();
         }
-        Matcher matcher = pattern.matcher(builder.toString());
+
+        Matcher matcher = PLAYLIST_PATTERN.matcher(builder.toString());
         if (matcher.find()) {
-            return matcher.group(1);
-        } else {
-            return "None";
+            String streamUrl = URLDecoder.decode(matcher.group(1).replace("&amp;", "&"), StandardCharsets.UTF_8).trim();
+            return streamUrl.isEmpty() ? "None" : streamUrl;
         }
+        return "None";
     }
 
     public Map<String, String> getRadios() {
