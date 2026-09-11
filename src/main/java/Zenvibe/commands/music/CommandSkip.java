@@ -3,6 +3,7 @@ package Zenvibe.commands.music;
 import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
+import Zenvibe.lavaplayer.AutoplayTarget;
 import Zenvibe.lavaplayer.GuildMusicManager;
 import Zenvibe.lavaplayer.ListenBrainzManager;
 import Zenvibe.lavaplayer.PlayerManager;
@@ -11,6 +12,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,7 @@ public class CommandSkip extends BaseCommand {
         final GuildMusicManager musicManager = PlayerManager.getInstance().getMusicManager(event.getGuild());
         final AudioPlayer audioPlayer = musicManager.audioPlayer;
 
-        skipCountGuilds.putIfAbsent(event.getGuild().getIdLong(), new ArrayList<>()); // required, otherwise there is a nullPointerException
+        skipCountGuilds.putIfAbsent(event.getGuild().getIdLong(), new ArrayList<>());
 
         List<Member> votes = skipCountGuilds.get(event.getGuild().getIdLong());
         if (votes.contains(event.getMember())) {
@@ -67,42 +69,71 @@ public class CommandSkip extends BaseCommand {
 
             AudioTrack finishing = audioPlayer.getPlayingTrack();
             boolean autoplaying = AutoplayGuilds.contains(event.getGuild().getIdLong());
-            if (autoplaying && finishing != null) {
-                long guildId = event.getGuild().getIdLong();
-                CompletableFuture.runAsync(() -> {
-                    String searchTerm = ListenBrainzManager.getSimilarSongs(finishing, guildId);
-                    if (searchTerm.equals("notfound") || searchTerm.equals("none") || searchTerm.isEmpty()) {
-                        return;
-                    }
-                    PlayerManager.getInstance().loadAndPlay(event, searchTerm, false, true);
-                });
-            }
             musicManager.scheduler.nextTrack();
             skipCountGuilds.remove(event.getGuild().getIdLong());
-            if (musicManager.audioPlayer.getPlayingTrack() == null) { // if there is nothing playing after the skip command
-                event.replyEmbeds(createQuickEmbed(" ", event.localise("cmd.skip.skippedTheTrack")));
-            } else { // if there is something playing after the skip command
-                EmbedBuilder eb = new EmbedBuilder();
-                eb.setColor(botColour);
-                if (musicManager.audioPlayer.getPlayingTrack().getInfo().title != null) {
-                    eb.setTitle(event.localise("cmd.skip.skippedTo", musicManager.audioPlayer.getPlayingTrack().getInfo().title), musicManager.audioPlayer.getPlayingTrack().getInfo().uri);
-                } else {
-                    eb.setTitle(event.localise("cmd.skip.skippedTo.unknown"));
-                    eb.appendDescription(event.localise("cmd.skip.nowPlaying", musicManager.audioPlayer.getPlayingTrack().getInfo().uri));
-                }
-                if (musicManager.audioPlayer.getPlayingTrack().getInfo().author != null) {
-                    eb.appendDescription(event.localise("cmd.skip.channel", musicManager.audioPlayer.getPlayingTrack().getInfo().author));
-                }
-                eb.appendDescription(event.localise("cmd.skip.duration", toSimpleTimestamp(musicManager.audioPlayer.getPlayingTrack().getInfo().length)));
-                if (autoplaying) {
-                    eb.appendDescription("\n♾️");
-                }
-                event.replyEmbeds(eb.build());
+
+            MessageEmbed skipEmbed = buildSkipEmbed(event, musicManager, autoplaying);
+            if (autoplaying && finishing != null) {
+                event.replyEmbeds(response -> CompletableFuture.runAsync(() -> {
+                    List<AutoplayTarget> targets = ListenBrainzManager.getSimilarTargets(finishing, event.getGuild().getIdLong(), 1);
+                    if (targets.isEmpty()) {
+                        response.editMessageEmbeds(buildSkipEmbed(event, musicManager, false));
+                        return;
+                    }
+                    AutoplayTarget target = targets.getFirst();
+                    PlayerManager.getInstance()
+                            .loadAndPlay(event, target.toLoadQuery(PlayerManager.hasSpotify()), false, true,
+                                    target.artist(), target.title())
+                            .whenComplete((ignored, error) -> {
+                                if (error != null) {
+                                    error.printStackTrace();
+                                    response.editMessageEmbeds(buildSkipEmbed(event, musicManager, false));
+                                    return;
+                                }
+                                response.editMessageEmbeds(buildSkipEmbed(event, musicManager, true,
+                                        event.localise("cmd.skip.autoplayQueued", target.artist(), target.title())));
+                            });
+                }), skipEmbed);
+            } else {
+                event.replyEmbeds(skipEmbed);
             }
         } else {
             event.replyEmbeds(createQuickEmbed(event.localise("cmd.skip.voted.title"),
                     event.localise("cmd.skip.voted.description", votedMemberCount, effectiveMemberCount / 2)));
         }
+    }
+
+    private static MessageEmbed buildSkipEmbed(CommandEvent event, GuildMusicManager musicManager, boolean autoplayLoading) {
+        return buildSkipEmbed(event, musicManager, autoplayLoading, null);
+    }
+
+    private static MessageEmbed buildSkipEmbed(CommandEvent event, GuildMusicManager musicManager,
+                                               boolean showAutoplay, String autoplayLine) {
+        AudioTrack playing = musicManager.audioPlayer.getPlayingTrack();
+        if (playing == null) {
+            return createQuickEmbed(" ", event.localise("cmd.skip.skippedTheTrack"));
+        }
+
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(botColour);
+        if (playing.getInfo().title != null) {
+            eb.setTitle(event.localise("cmd.skip.skippedTo", playing.getInfo().title), playing.getInfo().uri);
+        } else {
+            eb.setTitle(event.localise("cmd.skip.skippedTo.unknown"));
+            eb.appendDescription(event.localise("cmd.skip.nowPlaying", playing.getInfo().uri));
+        }
+        if (playing.getInfo().author != null) {
+            eb.appendDescription(event.localise("cmd.skip.channel", playing.getInfo().author));
+        }
+        eb.appendDescription(event.localise("cmd.skip.duration", toSimpleTimestamp(playing.getInfo().length)));
+        if (showAutoplay) {
+            if (autoplayLine != null && !autoplayLine.isBlank()) {
+                eb.appendDescription("\n♾️ " + autoplayLine);
+            } else {
+                eb.appendDescription("\n♾️ " + event.localise("cmd.ap.loadingTracks"));
+            }
+        }
+        return eb.build();
     }
 
     @Override

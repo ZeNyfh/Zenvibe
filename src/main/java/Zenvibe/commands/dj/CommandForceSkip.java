@@ -3,6 +3,7 @@ package Zenvibe.commands.dj;
 import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
+import Zenvibe.lavaplayer.AutoplayTarget;
 import Zenvibe.lavaplayer.GuildMusicManager;
 import Zenvibe.lavaplayer.ListenBrainzManager;
 import Zenvibe.lavaplayer.PlayerManager;
@@ -10,6 +11,7 @@ import Zenvibe.lavaplayer.RadioDataFetcher;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
@@ -34,27 +36,11 @@ public class CommandForceSkip extends BaseCommand {
     public void execute(CommandEvent event) {
         final GuildMusicManager musicManager = PlayerManager.getInstance().getMusicManager(event.getGuild());
         final AudioPlayer audioPlayer = musicManager.audioPlayer;
-        StringBuilder messageBuilder = new StringBuilder();
         AudioTrack finishing = audioPlayer.getPlayingTrack();
         boolean autoplaying = AutoplayGuilds.contains(event.getGuild().getIdLong());
-        if (autoplaying && finishing != null) {
-            long guildId = event.getGuild().getIdLong();
-            messageBuilder.append("♾️");
-            CompletableFuture.runAsync(() -> {
-                String searchTerm = ListenBrainzManager.getSimilarSongs(finishing, guildId);
-                if (searchTerm.equals("notfound") || searchTerm.equals("none") || searchTerm.isEmpty()) {
-                    return;
-                }
-                PlayerManager.getInstance().loadAndPlay(event, searchTerm, false, true);
-            });
-        }
-        if (event.getArgs().length > 1 && event.getArgs()[1].matches("^\\d+$")) { // autoplay logic shouldn't exist here
-            PlayerManager.TrackData trackData = (PlayerManager.TrackData) audioPlayer.getPlayingTrack().getUserData();
-            trackData.wasSkipped = true;
-            audioPlayer.getPlayingTrack().setUserData(trackData);
-            if ((double) audioPlayer.getPlayingTrack().getPosition() / audioPlayer.getPlayingTrack().getDuration() >= 0.5) {
-                vcScrobble(Objects.requireNonNull(event.getGuild().getSelfMember().getVoiceState()).getChannel(), audioPlayer.getPlayingTrack());
-            }
+
+        if (event.getArgs().length > 1 && event.getArgs()[1].matches("^\\d+$")) {
+            markSkipped(audioPlayer, event);
             int givenPosition = Integer.parseInt(event.getArgs()[1]);
             if (givenPosition - 1 >= musicManager.scheduler.queue.size()) {
                 musicManager.scheduler.queue.clear();
@@ -77,32 +63,97 @@ public class CommandForceSkip extends BaseCommand {
                 event.replyEmbeds(createQuickEmbed(" ", "⏩ " + event.localise("cmd.fs.skippedToPos",
                         event.getArgs()[1], trackHyperLink)));
             }
-        } else {
-            PlayerManager.TrackData trackData = (PlayerManager.TrackData) audioPlayer.getPlayingTrack().getUserData();
-            trackData.wasSkipped = true;
-            audioPlayer.getPlayingTrack().setUserData(trackData);
-            if ((double) audioPlayer.getPlayingTrack().getPosition() / audioPlayer.getPlayingTrack().getDuration() >= 0.5) {
-                vcScrobble(Objects.requireNonNull(event.getGuild().getSelfMember().getVoiceState()).getChannel(), audioPlayer.getPlayingTrack());
+            if (autoplaying && finishing != null) {
+                queueAutoplaySilently(event, finishing);
             }
+        } else {
+            markSkipped(audioPlayer, event);
+            MessageEmbed initial;
             if (!musicManager.scheduler.queue.isEmpty()) {
                 musicManager.scheduler.nextTrack();
-                AudioTrackInfo trackInfo = musicManager.audioPlayer.getPlayingTrack().getInfo();
-                String title = trackInfo.title;
-                boolean isHTTP = (trackInfo.uri.contains("youtube") || trackInfo.uri.contains("soundcloud") || trackInfo.uri.contains("twitch") || trackInfo.uri.contains("bandcamp") || trackInfo.uri.contains("spotify"));
-                if (trackInfo.isStream && !isHTTP) {
-                    String streamTitle = RadioDataFetcher.getStreamTitle(trackInfo.uri);
-                    if (streamTitle != null) {
-                        title = streamTitle;
-                    }
-                }
-                String trackHyperLink = "__**[" + title + "](" + trackInfo.uri + ")**__\n\n";
-                event.replyEmbeds(createQuickEmbed(" ", ("⏩ " + event.localise("cmd.fs.skippedToTrack", trackHyperLink + messageBuilder).trim())));
+                initial = buildForceSkipEmbed(event, musicManager, autoplaying, null);
             } else {
                 musicManager.scheduler.nextTrack();
-                event.replyEmbeds(createQuickEmbed(" ", ("⏩ " + event.localise("cmd.fs.skipped") + "\n\n" + messageBuilder).trim()));
+                initial = buildForceSkipEmbed(event, musicManager, autoplaying, null);
+            }
+
+            if (autoplaying && finishing != null) {
+                event.replyEmbeds(response -> CompletableFuture.runAsync(() -> {
+                    List<AutoplayTarget> targets = ListenBrainzManager.getSimilarTargets(finishing, event.getGuild().getIdLong(), 1);
+                    if (targets.isEmpty()) {
+                        response.editMessageEmbeds(buildForceSkipEmbed(event, musicManager, false, null));
+                        return;
+                    }
+                    AutoplayTarget target = targets.getFirst();
+                    PlayerManager.getInstance()
+                            .loadAndPlay(event, target.toLoadQuery(PlayerManager.hasSpotify()), false, true,
+                                    target.artist(), target.title())
+                            .whenComplete((ignored, error) -> {
+                                if (error != null) {
+                                    error.printStackTrace();
+                                    response.editMessageEmbeds(buildForceSkipEmbed(event, musicManager, false, null));
+                                    return;
+                                }
+                                response.editMessageEmbeds(buildForceSkipEmbed(event, musicManager, true,
+                                        event.localise("cmd.fs.autoplayQueued", target.artist(), target.title())));
+                            });
+                }), initial);
+            } else {
+                event.replyEmbeds(initial);
             }
         }
         skipCountGuilds.remove(event.getGuild().getIdLong());
+    }
+
+    private static void markSkipped(AudioPlayer audioPlayer, CommandEvent event) {
+        PlayerManager.TrackData trackData = (PlayerManager.TrackData) audioPlayer.getPlayingTrack().getUserData();
+        trackData.wasSkipped = true;
+        audioPlayer.getPlayingTrack().setUserData(trackData);
+        if ((double) audioPlayer.getPlayingTrack().getPosition() / audioPlayer.getPlayingTrack().getDuration() >= 0.5) {
+            vcScrobble(Objects.requireNonNull(event.getGuild().getSelfMember().getVoiceState()).getChannel(), audioPlayer.getPlayingTrack());
+        }
+    }
+
+    private static void queueAutoplaySilently(CommandEvent event, AudioTrack finishing) {
+        long guildId = event.getGuild().getIdLong();
+        CompletableFuture.runAsync(() -> {
+            List<AutoplayTarget> targets = ListenBrainzManager.getSimilarTargets(finishing, guildId, 1);
+            if (targets.isEmpty()) {
+                return;
+            }
+            AutoplayTarget target = targets.getFirst();
+            PlayerManager.getInstance().loadAndPlay(event, target.toLoadQuery(PlayerManager.hasSpotify()), false, true,
+                    target.artist(), target.title());
+        });
+    }
+
+    private static MessageEmbed buildForceSkipEmbed(CommandEvent event, GuildMusicManager musicManager,
+                                                    boolean showAutoplay, String autoplayLine) {
+        AudioTrack playing = musicManager.audioPlayer.getPlayingTrack();
+        if (playing == null) {
+            String body = "⏩ " + event.localise("cmd.fs.skipped");
+            if (showAutoplay) {
+                body += "\n\n♾️ " + (autoplayLine != null ? autoplayLine : event.localise("cmd.ap.loadingTracks"));
+            }
+            return createQuickEmbed(" ", body.trim());
+        }
+
+        AudioTrackInfo trackInfo = playing.getInfo();
+        String title = trackInfo.title;
+        boolean isHTTP = (trackInfo.uri.contains("youtube") || trackInfo.uri.contains("soundcloud")
+                || trackInfo.uri.contains("twitch") || trackInfo.uri.contains("bandcamp") || trackInfo.uri.contains("spotify"));
+        if (trackInfo.isStream && !isHTTP) {
+            String streamTitle = RadioDataFetcher.getStreamTitle(trackInfo.uri);
+            if (streamTitle != null) {
+                title = streamTitle;
+            }
+        }
+        String trackHyperLink = "__**[" + title + "](" + trackInfo.uri + ")**__";
+        String body = "⏩ " + event.localise("cmd.fs.skippedToTrack", trackHyperLink);
+        if (showAutoplay) {
+            body += "\n\n♾️ " + (autoplayLine != null ? autoplayLine : event.localise("cmd.ap.loadingTracks"));
+        }
+        return createQuickEmbed(" ", body.trim());
     }
 
     @Override
