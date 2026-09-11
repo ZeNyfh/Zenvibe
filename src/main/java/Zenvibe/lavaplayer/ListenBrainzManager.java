@@ -75,27 +75,31 @@ public final class ListenBrainzManager {
         if (mbid == null || mbid.isBlank()) return List.of();
         List<String> cached = URL_CACHE.get(mbid);
         if (cached != null) return cached;
+        if (!MetaBrainzClient.musicBrainzAvailable()) return List.of();
 
-        JsonBrowser root = getJson(MB + "/recording/" + enc(mbid) + "?inc=url-rels&fmt=json");
+        // UUID path segment — do not form-encode (and skip entirely while MB is cooling down).
+        JsonBrowser root = getJson(MB + "/recording/" + mbid + "?inc=url-rels&fmt=json");
+        if (root == null) {
+            return List.of(); // 503/error — do not cache empty as "no urls"
+        }
+
         List<String> urls = new ArrayList<>();
-        if (root != null) {
-            JsonBrowser relations = root.get("relations");
-            if (relations.isList()) {
-                for (JsonBrowser rel : relations.values()) {
-                    String type = text(rel, "type").toLowerCase(Locale.ROOT);
-                    if (!(type.contains("stream") || type.contains("download") || type.equals("youtube"))) {
-                        continue;
-                    }
-                    String resource = text(rel.get("url"), "resource");
-                    if (resource.isEmpty()) continue;
-                    String lower = resource.toLowerCase(Locale.ROOT);
-                    if (lower.contains("spotify.com/")
-                            || lower.contains("youtube.com/")
-                            || lower.contains("youtu.be/")
-                            || lower.contains("soundcloud.com/")
-                            || lower.contains("bandcamp.com/")) {
-                        urls.add(resource);
-                    }
+        JsonBrowser relations = root.get("relations");
+        if (relations.isList()) {
+            for (JsonBrowser rel : relations.values()) {
+                String type = text(rel, "type").toLowerCase(Locale.ROOT);
+                if (!(type.contains("stream") || type.contains("download") || type.equals("youtube"))) {
+                    continue;
+                }
+                String resource = text(rel.get("url"), "resource");
+                if (resource.isEmpty()) continue;
+                String lower = resource.toLowerCase(Locale.ROOT);
+                if (lower.contains("spotify.com/")
+                        || lower.contains("youtube.com/")
+                        || lower.contains("youtu.be/")
+                        || lower.contains("soundcloud.com/")
+                        || lower.contains("bandcamp.com/")) {
+                    urls.add(resource);
                 }
             }
         }
