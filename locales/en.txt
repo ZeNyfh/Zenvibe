@@ -15,6 +15,7 @@
 cmd.ap.noAPI=The bot has not been given an API key for LastFM, this command does not work without it.
 cmd.ap.notAutoplaying=No longer autoplaying.
 cmd.ap.isAutoplaying=Now autoplaying.
+cmd.ap.loadingTracks=Loading tracks...
 
 cmd.bc.invalidUsage=The valid usage is: `{1} <channel>` or `{2}` // 1 here is the command and its arguments, 2 is also a command, `` is markdown, do not remove.
 cmd.bc.alreadyBlocked=This channel is already blocked.

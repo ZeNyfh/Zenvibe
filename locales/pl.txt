@@ -10,6 +10,7 @@
 cmd.ap.noAPI=Bot nie otrzymał klucza API dla LastFM, ta komenda nie działa bez niego.
 cmd.ap.notAutoplaying=Autoodtwarzanie zostało wyłączone.
 cmd.ap.isAutoplaying=Autoodtwarzanie zostało włączone.
+cmd.ap.loadingTracks=Ładowanie utworów...
 
 cmd.bc.invalidUsage=Poprawne użycie to: `{1} <kanał>` lub `{2}`
 cmd.bc.alreadyBlocked=Ten kanał został zablokowany.
