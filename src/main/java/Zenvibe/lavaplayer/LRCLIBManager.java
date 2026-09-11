@@ -41,7 +41,7 @@ public class LRCLIBManager {
             }
 
             String lyrics = parseLyrics(response);
-            if (lyrics == null || lyrics.equalsIgnoreCase("null")) {
+            if (lyrics == null || lyrics.equalsIgnoreCase("null") || lyrics.isBlank()) {
                 return "";
             }
             return lyrics;
@@ -51,25 +51,59 @@ public class LRCLIBManager {
         }
     }
 
-    private static String createURL(AudioTrack track) {
-        StringBuilder urlBuilder = new StringBuilder();
-        urlBuilder.append("https://lrclib.net/api/search?q=");
-
+    /** Catalogue artist - title when MusicBrainz resolves; otherwise filtered lavaplayer metadata. */
+    public static String displayName(AudioTrack track) {
         String title = track.getInfo().title;
+        String artist = track.getInfo().author == null ? "" : track.getInfo().author;
         if (track.getInfo().isStream && Objects.equals(track.getSourceManager().getSourceName(), "http")) {
-            title = RadioDataFetcher.getStreamSongNow(track.getInfo().uri)[0];
-        }
-
-        title = filterMetadata(title);
-
-        String artist = track.getInfo().author;
-        if (track.getInfo().isStream && Objects.equals(track.getSourceManager().getSourceName(), "http")) {
+            String[] now = RadioDataFetcher.getStreamSongNow(track.getInfo().uri);
+            if (now != null && now[0] != null && !now[0].isBlank()) {
+                title = now[0];
+            }
             artist = "";
         }
-        // add stream author/artist here.
+        ResolvedRecording resolved = ListenBrainzManager.resolve(artist, title);
+        if (resolved != null) {
+            return resolved.artist() + " - " + resolved.title();
+        }
+        title = filterMetadata(title);
+        if (artist.isBlank()) {
+            return title;
+        }
+        return artist + " - " + title;
+    }
 
-        urlBuilder.append(URLEncoder.encode(artist + " " + title, StandardCharsets.UTF_8).trim());
-        return urlBuilder.toString();
+    private static String createURL(AudioTrack track) {
+        String title = track.getInfo().title;
+        String artist = track.getInfo().author == null ? "" : track.getInfo().author;
+        if (track.getInfo().isStream && Objects.equals(track.getSourceManager().getSourceName(), "http")) {
+            String[] now = RadioDataFetcher.getStreamSongNow(track.getInfo().uri);
+            if (now != null && now[0] != null && !now[0].isBlank()) {
+                title = now[0];
+            }
+            artist = "";
+        }
+
+        ResolvedRecording resolved = ListenBrainzManager.resolve(artist, title);
+        if (resolved != null) {
+            artist = resolved.artist();
+            title = resolved.title();
+        } else {
+            title = filterMetadata(title);
+        }
+
+        if (title.isBlank()) {
+            return "";
+        }
+
+        if (!artist.isBlank()) {
+            return "https://lrclib.net/api/search?artist_name="
+                    + URLEncoder.encode(artist, StandardCharsets.UTF_8)
+                    + "&track_name="
+                    + URLEncoder.encode(title, StandardCharsets.UTF_8);
+        }
+        return "https://lrclib.net/api/search?q="
+                + URLEncoder.encode(title, StandardCharsets.UTF_8);
     }
 
     private static String parseLyrics(String rawJson) {
@@ -81,15 +115,16 @@ public class LRCLIBManager {
             return "";
         }
 
-        JsonBrowser trackDetailsBrowser = null;
-        try {
-            trackDetailsBrowser = parsedJson.values().get(1);
-        } catch (Exception ignored) {
-            System.err.println("No lyrics were found for this track.");
-        }
-        if (trackDetailsBrowser == null) {
+        if (!parsedJson.isList()) {
             return "";
         }
-        return trackDetailsBrowser.get("plainLyrics").safeText();
+        for (JsonBrowser row : parsedJson.values()) {
+            String lyrics = row.get("plainLyrics").safeText();
+            if (lyrics != null && !lyrics.isBlank() && !lyrics.equalsIgnoreCase("null")) {
+                return lyrics;
+            }
+        }
+        System.err.println("No lyrics were found for this track.");
+        return "";
     }
 }
