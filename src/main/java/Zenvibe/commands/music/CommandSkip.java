@@ -4,7 +4,7 @@ import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
 import Zenvibe.lavaplayer.GuildMusicManager;
-import Zenvibe.lavaplayer.LastFMManager;
+import Zenvibe.lavaplayer.ListenBrainzManager;
 import Zenvibe.lavaplayer.PlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -15,9 +15,9 @@ import net.dv8tion.jda.api.entities.Member;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import static Zenvibe.Main.*;
-import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.toSimpleTimestamp;
@@ -65,42 +65,17 @@ public class CommandSkip extends BaseCommand {
                 vcScrobble(selfVoiceState.getChannel(), audioPlayer.getPlayingTrack());
             }
 
-            StringBuilder messageBuilder = new StringBuilder();
-            if (AutoplayGuilds.contains(event.getGuild().getIdLong())) {
-                String searchTerm = LastFMManager.getSimilarSongs(audioPlayer.getPlayingTrack(), event.getGuild().getIdLong());
-                boolean canPlay = true;
-                if (searchTerm.equals("notfound")) {
-                    messageBuilder.append("❌ **")
-                            .append(event.localise("main.error"))
-                            .append(":**\n")
-                            .append(event.localise("cmd.skip.failedToFind", audioPlayer.getPlayingTrack().getInfo().title));
-                    canPlay = false;
-                }
-                if (searchTerm.equals("none")) {
-                    messageBuilder.append("❌ **")
-                            .append(event.localise("main.error"))
-                            .append(":**\n")
-                            .append(event.localise("cmd.skip.couldNotFind"));
-                    canPlay = false;
-                }
-                if (searchTerm.isEmpty()) {
-                    messageBuilder.append("❌ **")
-                            .append(event.localise("main.error"))
-                            .append(":**\n")
-                            .append(event.localise("cmd.skip.noSearchTerm"));
-                    canPlay = false;
-                }
-                if (canPlay) {
-                    AudioTrack track = audioPlayer.getPlayingTrack();
-                    // TODO: should be replaced with actual logic checking if last.fm has either the author or the artist name in the title.
-                    String artistName = (track.getInfo().author.isEmpty() || track.getInfo().author == null)
-                            ? filterMetadata((track.getInfo().title).toLowerCase())
-                            : filterMetadata(track.getInfo().author.toLowerCase());
-                    String title = filterMetadata(track.getInfo().title.toLowerCase());
-                    PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + artistName + " - " + title, false);
-                    messageBuilder.append("♾️ ")
-                            .append(event.localise("cmd.skip.autoplayQueued", artistName, title));
-                }
+            AudioTrack finishing = audioPlayer.getPlayingTrack();
+            boolean autoplaying = AutoplayGuilds.contains(event.getGuild().getIdLong());
+            if (autoplaying && finishing != null) {
+                long guildId = event.getGuild().getIdLong();
+                CompletableFuture.runAsync(() -> {
+                    String searchTerm = ListenBrainzManager.getSimilarSongs(finishing, guildId);
+                    if (searchTerm.equals("notfound") || searchTerm.equals("none") || searchTerm.isEmpty()) {
+                        return;
+                    }
+                    PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + searchTerm, false, true);
+                });
             }
             musicManager.scheduler.nextTrack();
             skipCountGuilds.remove(event.getGuild().getIdLong());
@@ -119,7 +94,9 @@ public class CommandSkip extends BaseCommand {
                     eb.appendDescription(event.localise("cmd.skip.channel", musicManager.audioPlayer.getPlayingTrack().getInfo().author));
                 }
                 eb.appendDescription(event.localise("cmd.skip.duration", toSimpleTimestamp(musicManager.audioPlayer.getPlayingTrack().getInfo().length)));
-                eb.appendDescription(messageBuilder);
+                if (autoplaying) {
+                    eb.appendDescription("\n♾️");
+                }
                 event.replyEmbeds(eb.build());
             }
         } else {
