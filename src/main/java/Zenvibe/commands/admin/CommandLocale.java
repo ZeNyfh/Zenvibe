@@ -35,7 +35,7 @@ public class CommandLocale extends BaseCommand {
         }
 
         String selectionValue = event.getInteraction().getSelectedOptions().getFirst().getValue();
-        config.put("Locale", selectionValue);
+        Zenvibe.managers.GuildDataManager.database().setLocale(event.getGuild().getIdLong(), selectionValue);
         Map<String, String> locale = languages.get(selectionValue);
         guildLocales.put(event.getGuild().getIdLong(), locale);
         event.replyEmbeds(createQuickSuccess(managerLocalise("cmd.loc.languageChanged", locale, selectionValue), locale)).queue();
