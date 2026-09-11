@@ -6,7 +6,6 @@ import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
-import org.json.simple.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,7 +25,7 @@ import java.util.regex.Pattern;
 
 import static Zenvibe.Main.*;
 import static Zenvibe.lavaplayer.RadioDataFetcher.getStreamSongNow;
-import static Zenvibe.managers.GuildDataManager.GetConfig;
+import Zenvibe.managers.GuildDataManager;
 
 // Last.fm wish for their API to be used sensibly; I have outlined with comments how it is being used sensibly with attention to their note found at: https://www.last.fm/api/intro
 public class LastFMManager {
@@ -85,7 +84,6 @@ public class LastFMManager {
         put("∙", ".");
     }};
     public static boolean hasAPI = false;
-    public static JSONObject sessionKeys = GetConfig("lastfm");
     private static String APIKEY = null;
     private static String LASTFMSECRET = null;
 
@@ -179,7 +177,8 @@ public class LastFMManager {
 
     public static void vcScrobble(AudioChannelUnion channel, AudioTrack track) {
         for (Member member : Objects.requireNonNull(channel).getMembers()) {
-            if (sessionKeys.containsKey(member.getId())) {
+            String session = GuildDataManager.database().lastFmSession(member.getId());
+            if (session != null && !session.startsWith("REQUEST")) {
                 try {
                     scrobble(track, member.getId());
                 } catch (Exception e) {
@@ -221,7 +220,8 @@ public class LastFMManager {
         String duration = String.valueOf(track.getDuration() / 1000);
         String format = "json";
 
-        String sessionKey = sessionKeys.get(userID).toString();
+        String sessionKey = GuildDataManager.database().lastFmSession(userID);
+        if (sessionKey == null || sessionKey.startsWith("REQUEST")) return;
 
         TreeMap<String, String> params = new TreeMap<>();
         params.put("api_key", APIKEY);
