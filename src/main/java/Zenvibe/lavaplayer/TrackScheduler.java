@@ -149,6 +149,7 @@ public class TrackScheduler extends AudioEventAdapter {
 
 
     private void scrobbleFinishedTrack(AudioTrack track, long guildID) {
+        CompletableFuture.runAsync(() -> {
             try {
                 if (!LastFMManager.hasAPI) {
                     return;
