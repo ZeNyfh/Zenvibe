@@ -6,15 +6,14 @@ import Zenvibe.CommandStateChecker.Check;
 import Zenvibe.lavaplayer.GuildMusicManager;
 import Zenvibe.lavaplayer.LRCLIBManager;
 import Zenvibe.lavaplayer.PlayerManager;
-import Zenvibe.lavaplayer.RadioDataFetcher;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 import static Zenvibe.Main.botColour;
+import static Zenvibe.managers.EmbedManager.sanitise;
 
 public class CommandLyrics extends BaseCommand {
     @Override
@@ -27,13 +26,11 @@ public class CommandLyrics extends BaseCommand {
         final GuildMusicManager musicManager = PlayerManager.getInstance().getMusicManager(event.getGuild());
         final AudioPlayer audioPlayer = musicManager.audioPlayer;
 
-        // Send loading embed
         EmbedBuilder loadingEmbed = new EmbedBuilder();
         loadingEmbed.setColor(botColour);
         loadingEmbed.setDescription(event.localise("main.loading"));
 
         event.replyEmbeds(response -> {
-            // Get lyrics after sending loading embed
             String lyrics = LRCLIBManager.getLyrics(audioPlayer.getPlayingTrack()).trim();
 
             if (lyrics.isEmpty()) {
@@ -42,24 +39,25 @@ public class CommandLyrics extends BaseCommand {
             }
 
             EmbedBuilder builder = new EmbedBuilder().setColor(botColour).setFooter(event.localise("cmd.lyr.source"));
-            String title = audioPlayer.getPlayingTrack().getInfo().title;
-            if (audioPlayer.getPlayingTrack().getInfo().isStream && Objects.equals(audioPlayer.getPlayingTrack().getSourceManager().getSourceName(), "http")) {
-                title = RadioDataFetcher.getStreamSongNow(audioPlayer.getPlayingTrack().getInfo().uri)[0];
-            }
+            String title = LRCLIBManager.displayName(audioPlayer.getPlayingTrack());
 
-            title = event.localise("cmd.lyr.lyricsForTrack", title);
-            if (title.length() > 256) {
-                title = title.substring(0, 253) + "...";
+            String embedTitle = event.localise("cmd.lyr.lyricsForTrack", sanitise(title));
+            if (embedTitle.length() > 256) {
+                embedTitle = embedTitle.substring(0, 253) + "...";
             }
 
             if (lyrics.length() <= 2000) {
                 builder.setDescription(lyrics);
-                builder.setTitle(title);
+                builder.setTitle(embedTitle);
                 response.editMessageEmbeds(builder.build());
             } else {
                 builder.setDescription(event.localise("cmd.lyr.tooLong"));
                 response.editMessageEmbeds(builder.build());
-                event.getChannel().sendFiles(FileUpload.fromData(lyrics.getBytes(StandardCharsets.UTF_8), title + ".txt")).queue();
+                String fileName = event.localise("cmd.lyr.lyricsForTrack", title);
+                if (fileName.length() > 200) {
+                    fileName = fileName.substring(0, 197) + "...";
+                }
+                event.getChannel().sendFiles(FileUpload.fromData(lyrics.getBytes(StandardCharsets.UTF_8), fileName + ".txt")).queue();
             }
         }, loadingEmbed.build());
     }
