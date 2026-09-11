@@ -158,7 +158,7 @@ cmd.rem.tooLarge=Podana liczba jest większa niż rozmiar kolejki.
 cmd.rem.removed=Usunięto z kolejki utwór {1} pomyślnie.
 
 cmd.scrobble.cannotDM=Nie mogę wysłać tobie prywatnej wiadomości, pozwól mi wysłać tobie wiadomość prywatną lub użyć komend slash!
-cmd.scrobble.authPending=Uwierzytelnij swój profil Last.fm, aby Zenvibe mógł scrobblować: **{1}**\n\nPo zakończeniu na Last.fm scrobblowanie włączy się automatycznie — nie musisz ponownie uruchamiać komendy.
+cmd.scrobble.authPending=Uwierzytelnij swój profil Last.fm, aby Zenvibe mógł scrobblować: **{1}**\n\nPo zakończeniu na Last.fm scrobblowanie włączy się automatycznie - nie musisz ponownie uruchamiać komendy.
 cmd.scrobble.startedScrobbling=Włączono scrobblowanie dla Twojego profilu! Będzie to działać na wszystkich serwerach Discord z Zenvibe. Użyj ponownie komendy `scrobble`, aby wyłączyć scrobblowanie.
 cmd.scrobble.stoppedScrobbling=Wyłączyono scrobblowanie dla Twojego profilu! Aby ponownie włączyć scrobblowanie, musisz się ponownie uwierzytelnić.
 cmd.scrobble.authTimedOut=Uwierzytelnianie Last.fm wygasło. Uruchom ponownie `scrobble` i dokończ link w ciągu 10 minut.

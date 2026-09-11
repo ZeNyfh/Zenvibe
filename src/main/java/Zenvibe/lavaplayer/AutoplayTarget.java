@@ -56,7 +56,7 @@ public record AutoplayTarget(String artist, String title, String mbid, List<Stri
         if (u.contains("youtube.com/watch") || u.contains("youtu.be/")) return 1;
         if (u.contains("soundcloud.com/")) return 2;
         if (u.contains("bandcamp.com/")) return 3;
-        if (u.contains("spotify.com/")) return 9; // album/artist links — last resort
+        if (u.contains("spotify.com/")) return 9;
         return 5;
     }
 

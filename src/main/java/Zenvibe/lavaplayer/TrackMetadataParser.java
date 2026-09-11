@@ -126,7 +126,6 @@ public final class TrackMetadataParser {
         best.merge(c.key(), c, (a, b) -> a.score() >= b.score() ? a : b);
     }
 
-    /** Local candidate check — no network. */
     public static void main(String[] args) {
         List<TrackMetadataCandidate> cs = candidates(
                 "Atlantic Records", "Skillet - Awake and Alive (Official Audio)");

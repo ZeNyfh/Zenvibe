@@ -77,10 +77,9 @@ public final class ListenBrainzManager {
         if (cached != null) return cached;
         if (!MetaBrainzClient.musicBrainzAvailable()) return List.of();
 
-        // UUID path segment — do not form-encode (and skip entirely while MB is cooling down).
         JsonBrowser root = getJson(MB + "/recording/" + mbid + "?inc=url-rels&fmt=json");
         if (root == null) {
-            return List.of(); // 503/error — do not cache empty as "no urls"
+            return List.of();
         }
 
         List<String> urls = new ArrayList<>();
