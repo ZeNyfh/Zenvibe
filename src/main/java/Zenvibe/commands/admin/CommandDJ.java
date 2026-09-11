@@ -9,8 +9,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -115,7 +113,8 @@ public class CommandDJ extends BaseCommand {
             return;
         }
 
-        applyChanges(event.getConfig(), targets, isAdding);
+        Zenvibe.managers.GuildDataManager.database().changeMemberships(event.getGuild().getIdLong(),
+                java.util.Map.of("DJRoles", targets.roleIds(), "DJUsers", targets.memberIds()), isAdding);
         String responseMessage = buildResponseMessage(event, targets);
         if (isAdding) {
             event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.dj.added", responseMessage)));
@@ -144,31 +143,6 @@ public class CommandDJ extends BaseCommand {
         }
 
         return new DJTargets(memberIds, roleIds);
-    }
-
-    private void applyChanges(JSONObject config, DJTargets targets, boolean isAdding) {
-        JSONArray djRoles = (JSONArray) config.get("DJRoles");
-        JSONArray djUsers = (JSONArray) config.get("DJUsers");
-
-        for (long memberId : targets.memberIds()) {
-            String memberIdText = String.valueOf(memberId);
-            if (isAdding && !djUsers.contains(memberIdText) && !djUsers.contains(memberId)) {
-                djUsers.add(memberIdText);
-            } else if (!isAdding) {
-                djUsers.remove(memberIdText);
-                djUsers.remove(memberId);
-            }
-        }
-
-        for (long roleId : targets.roleIds()) {
-            String roleIdText = String.valueOf(roleId);
-            if (isAdding && !djRoles.contains(roleIdText) && !djRoles.contains(roleId)) {
-                djRoles.add(roleIdText);
-            } else if (!isAdding) {
-                djRoles.remove(roleIdText);
-                djRoles.remove(roleId);
-            }
-        }
     }
 
     private String buildResponseMessage(CommandEvent event, DJTargets targets) {
