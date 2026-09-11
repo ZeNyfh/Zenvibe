@@ -19,3 +19,12 @@ src/main/resources/META-INF/MANIFEST.MF
 !.idea/misc.xml
 
 build.sh
+
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+!src/main/resources/
+!src/main/resources/sql/
+!src/main/resources/sql/*.sql
