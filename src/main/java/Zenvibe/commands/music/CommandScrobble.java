@@ -3,45 +3,41 @@ package Zenvibe.commands.music;
 import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 
-import java.util.HashMap;
+import Zenvibe.managers.GuildDataManager;
 
 import static Zenvibe.lavaplayer.LastFMManager.*;
 
 public class CommandScrobble extends BaseCommand {
-    public static HashMap<String, String> scrobbleUsers = new HashMap<>();
 
     @Override
     public void execute(CommandEvent event) throws Exception {
-        scrobbleUsers = sessionKeys;
-        scrobbleUsers.get(event.getUser().getId());
-
-        if (!scrobbleUsers.containsKey(event.getUser().getId())) {
-            scrobbleUsers.put(event.getUser().getId(), "REQUEST" + fetchRequestToken());
-            sessionKeys = (org.json.simple.JSONObject) scrobbleUsers;
+        var storage = GuildDataManager.database();
+        String userId = event.getUser().getId();
+        String savedSession = storage.lastFmSession(userId);
+        if (savedSession == null) {
+            String requestToken = fetchRequestToken();
+            storage.saveLastFmSession(userId, "REQUEST" + requestToken);
             if (event.isSlash()) {
                 event.deferReply(true);
-                event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.scrobble.authPending", fetchUserAuthorisation(scrobbleUsers.get(event.getUser().getId()).replace("REQUEST", "")))));
+                event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.scrobble.authPending", fetchUserAuthorisation(requestToken))));
             } else {
                 event.getUser().openPrivateChannel().queue(dm -> {
                     try {
-                        dm.sendMessageEmbeds(event.createQuickSuccess(event.localise("cmd.scrobble.authPending", fetchUserAuthorisation(scrobbleUsers.get(event.getUser().getId()).replace("REQUEST", ""))))).queue();
+                        dm.sendMessageEmbeds(event.createQuickSuccess(event.localise("cmd.scrobble.authPending", fetchUserAuthorisation(requestToken)))).queue();
                     } catch (Exception e) {
                         event.replyEmbeds(event.createQuickError(event.localise("cmd.scrobble.cannotDM")));
                     }
                 });
             }
         } else {
-            if (scrobbleUsers.get(event.getUser().getId()).contains("REQUEST")) {
-                String sessionKey = fetchWebServiceSession(scrobbleUsers.get(event.getUser().getId()).replace("REQUEST", ""));
-                scrobbleUsers.put(event.getUser().getId(), sessionKey);
+            if (savedSession.startsWith("REQUEST")) {
+                String sessionKey = fetchWebServiceSession(savedSession.substring("REQUEST".length()));
+                storage.saveLastFmSession(userId, sessionKey);
                 event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.scrobble.startedScrobbling")));
-                sessionKeys = (org.json.simple.JSONObject) scrobbleUsers;
                 return;
             }
+            storage.removeLastFmSession(userId);
             event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.scrobble.stoppedScrobbling")));
-
-            scrobbleUsers.remove(event.getUser().getId());
-            sessionKeys = (org.json.simple.JSONObject) scrobbleUsers;
         }
     }
 
