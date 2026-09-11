@@ -4,7 +4,7 @@ import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
 import Zenvibe.lavaplayer.GuildMusicManager;
-import Zenvibe.lavaplayer.LastFMManager;
+import Zenvibe.lavaplayer.ListenBrainzManager;
 import Zenvibe.lavaplayer.PlayerManager;
 import Zenvibe.lavaplayer.RadioDataFetcher;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
@@ -16,10 +16,10 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import static Zenvibe.Main.AutoplayGuilds;
 import static Zenvibe.Main.skipCountGuilds;
-import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.sanitise;
@@ -35,25 +35,18 @@ public class CommandForceSkip extends BaseCommand {
         final GuildMusicManager musicManager = PlayerManager.getInstance().getMusicManager(event.getGuild());
         final AudioPlayer audioPlayer = musicManager.audioPlayer;
         StringBuilder messageBuilder = new StringBuilder();
-        if (AutoplayGuilds.contains(event.getGuild().getIdLong())) {
-            String searchTerm = LastFMManager.getSimilarSongs(audioPlayer.getPlayingTrack(), event.getGuild().getIdLong());
-            String errorMessage = "❌ **" + event.localise("main.error") + ":**\n";
-            switch (searchTerm) {
-                case "notfound" ->
-                        messageBuilder.append(errorMessage).append(event.localise("cmd.fs.failedToFind", audioPlayer.getPlayingTrack().getInfo().title));
-                case "none" -> messageBuilder.append(errorMessage).append(event.localise("cmd.fs.couldNotFind"));
-                case "" -> messageBuilder.append(errorMessage).append(event.localise("cmd.fs.nullSearchTerm"));
-                default -> {
-                    AudioTrack track = audioPlayer.getPlayingTrack();
-                    // TODO: should be replaced with actual logic checking if last.fm has either the author or the artist name in the title.
-                    String artistName = (track.getInfo().author == null || track.getInfo().author.isEmpty())
-                            ? filterMetadata(track.getInfo().title.toLowerCase())
-                            : filterMetadata(track.getInfo().author.toLowerCase());
-                    String title = filterMetadata(track.getInfo().title.toLowerCase());
-                    PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + artistName + " - " + title, false);
-                    messageBuilder.append("♾️ ").append(event.localise("cmd.fs.autoplayQueued", artistName, title));
+        AudioTrack finishing = audioPlayer.getPlayingTrack();
+        boolean autoplaying = AutoplayGuilds.contains(event.getGuild().getIdLong());
+        if (autoplaying && finishing != null) {
+            long guildId = event.getGuild().getIdLong();
+            messageBuilder.append("♾️");
+            CompletableFuture.runAsync(() -> {
+                String searchTerm = ListenBrainzManager.getSimilarSongs(finishing, guildId);
+                if (searchTerm.equals("notfound") || searchTerm.equals("none") || searchTerm.isEmpty()) {
+                    return;
                 }
-            }
+                PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + searchTerm, false, true);
+            });
         }
         if (event.getArgs().length > 1 && event.getArgs()[1].matches("^\\d+$")) { // autoplay logic shouldn't exist here
             PlayerManager.TrackData trackData = (PlayerManager.TrackData) audioPlayer.getPlayingTrack().getUserData();
