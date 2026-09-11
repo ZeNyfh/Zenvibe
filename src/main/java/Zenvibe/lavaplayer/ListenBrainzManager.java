@@ -72,6 +72,10 @@ public final class ListenBrainzManager {
         return r == null ? null : r.mbid();
     }
 
+    public static ResolvedRecording resolveTrack(AudioTrack track) {
+        return resolve(track);
+    }
+
     static ResolvedRecording resolve(AudioTrack track) {
         return resolve(nz(track.getInfo().author), nz(track.getInfo().title));
     }
