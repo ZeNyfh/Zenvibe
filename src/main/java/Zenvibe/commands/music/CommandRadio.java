@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -21,7 +22,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,8 +36,9 @@ import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.sanitise;
 
 public class CommandRadio extends BaseCommand {
-    private static final Pattern PLAYLIST_PATTERN = Pattern.compile(
-            "playlistgenerator/\\?u=([^\"&]+)&(?:amp;)?t=\\.(m3u|pls)",
+    // internet-radio.com lists .pls/.m3u via playlistgenerator, with the station title in the following <h4>.
+    private static final Pattern STATION_PATTERN = Pattern.compile(
+            "playlistgenerator/\\?u=([^\"&]+)&(?:amp;)?t=\\.(?:m3u|pls)[\\s\\S]*?<h4 class=\"text-danger\"[^>]*>\\s*(?:<a[^>]*>)?([^<]+)",
             Pattern.CASE_INSENSITIVE);
 
     Map<String, String> radioLists = new HashMap<>() {{
@@ -55,17 +59,39 @@ public class CommandRadio extends BaseCommand {
     }};
 
     public static String getRadio(String search) throws IOException {
-        String query = search == null ? "" : search.trim().replace('+', ' ');
+        String query = search == null ? "" : search.trim().replace('+', ' ').replaceAll("\\s+", " ");
         if (query.isEmpty()) {
             return "None";
         }
 
+        String[] tokens = query.toLowerCase(Locale.ROOT).split(" ");
+        LinkedHashMap<String, String> stations = scrapeStations(query); // url -> name
+
+        if (stations.isEmpty() && tokens.length > 1) {
+            for (String token : tokens) {
+                if (token.isBlank()) continue;
+                mergeStations(stations, scrapeStations(token));
+                if (bestMatchScore(stations, tokens) == tokens.length) {
+                    break; // already have a station matching every term
+                }
+            }
+        }
+
+        if (stations.isEmpty()) {
+            return "None";
+        }
+
+        return bestMatchUrl(stations, tokens);
+    }
+
+    private static LinkedHashMap<String, String> scrapeStations(String query) throws IOException {
+        LinkedHashMap<String, String> stations = new LinkedHashMap<>();
         URL url;
         try {
             url = URI.create("https://www.internet-radio.com/search/?radio=" + URLEncoder.encode(query, StandardCharsets.UTF_8)).toURL();
         } catch (Exception e) {
             e.printStackTrace();
-            return "None";
+            return stations;
         }
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -74,23 +100,81 @@ public class CommandRadio extends BaseCommand {
         connection.setRequestProperty("User-Agent", "Mozilla/5.0");
         connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
 
+        int status = connection.getResponseCode();
+        InputStream stream = status >= 200 && status < 400 ? connection.getInputStream() : connection.getErrorStream();
+        if (stream == null || status == 404) {
+            connection.disconnect();
+            return stations;
+        }
+
         StringBuilder builder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             for (String line; (line = reader.readLine()) != null; ) {
                 builder.append(line);
             }
         } catch (Exception ignored) {
-            return "None";
+            return stations;
         } finally {
             connection.disconnect();
         }
 
-        Matcher matcher = PLAYLIST_PATTERN.matcher(builder.toString());
-        if (matcher.find()) {
+        Matcher matcher = STATION_PATTERN.matcher(builder.toString());
+        while (matcher.find()) {
             String streamUrl = URLDecoder.decode(matcher.group(1).replace("&amp;", "&"), StandardCharsets.UTF_8).trim();
-            return streamUrl.isEmpty() ? "None" : streamUrl;
+            String name = unescapeHtml(matcher.group(2)).trim();
+            if (!streamUrl.isEmpty() && !name.isEmpty()) {
+                stations.putIfAbsent(streamUrl, name);
+            }
         }
-        return "None";
+        return stations;
+    }
+
+    private static void mergeStations(LinkedHashMap<String, String> into, LinkedHashMap<String, String> from) {
+        for (Map.Entry<String, String> entry : from.entrySet()) {
+            into.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private static int matchScore(String name, String[] tokens) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        int score = 0;
+        for (String token : tokens) {
+            if (lower.contains(token)) {
+                score++;
+            }
+        }
+        return score;
+    }
+
+    private static int bestMatchScore(Map<String, String> stations, String[] tokens) {
+        int best = 0;
+        for (String name : stations.values()) {
+            best = Math.max(best, matchScore(name, tokens));
+        }
+        return best;
+    }
+
+    private static String bestMatchUrl(LinkedHashMap<String, String> stations, String[] tokens) {
+        String bestUrl = null;
+        int bestScore = -1;
+        for (Map.Entry<String, String> entry : stations.entrySet()) {
+            int score = matchScore(entry.getValue(), tokens);
+            if (score > bestScore) {
+                bestScore = score;
+                bestUrl = entry.getKey();
+            }
+        }
+        return bestUrl != null ? bestUrl : "None";
+    }
+
+    private static String unescapeHtml(String input) {
+        return input
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&apos;", "'");
     }
 
     public Map<String, String> getRadios() {
