@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 
 import static Zenvibe.CommandEvent.createQuickError;
 import static Zenvibe.Main.*;
+import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.sanitise;
 import static Zenvibe.managers.EmbedManager.toTimestamp;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
@@ -265,6 +266,11 @@ public class PlayerManager {
     }
 
     public void loadAutoplayBatch(Object eventOrChannel, List<AutoplayTarget> targets, long guildId) {
+        loadAutoplayBatch(eventOrChannel, targets, guildId, null);
+    }
+
+    public void loadAutoplayBatch(Object eventOrChannel, List<AutoplayTarget> targets, long guildId,
+                                  CommandEvent.Response loadingResponse) {
         if (targets == null || targets.isEmpty()) {
             return;
         }
@@ -294,11 +300,20 @@ public class PlayerManager {
                 added.addAll(queued.subList(queueBefore, queued.size()));
             }
             if (added.isEmpty()) {
+                if (loadingResponse != null) {
+                    Map<String, String> locale = guildLocales.get(guildId);
+                    loadingResponse.editMessageEmbeds(createQuickEmbed("✅ ♾\uFE0F",
+                            managerLocalise("cmd.ap.isAutoplaying", locale)));
+                }
                 return;
             }
             Map<String, String> locale = guildLocales.get(guildId);
             MessageEmbed embed = createQueuedTracksEmbed(managerLocalise("tsched.queued", locale), added, guildId);
-            replyWithEmbed(eventOrChannel, embed, true);
+            if (loadingResponse != null) {
+                loadingResponse.editMessageEmbeds(embed);
+            } else {
+                replyWithEmbed(eventOrChannel, embed, true);
+            }
         });
     }
 

@@ -3,15 +3,17 @@ package Zenvibe.commands.dj;
 import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
-import Zenvibe.lavaplayer.ListenBrainzManager;
 import Zenvibe.lavaplayer.AutoplayTarget;
+import Zenvibe.lavaplayer.ListenBrainzManager;
 import Zenvibe.lavaplayer.PlayerManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import net.dv8tion.jda.api.EmbedBuilder;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static Zenvibe.Main.AutoplayGuilds;
+import static Zenvibe.Main.botColour;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 
 public class CommandAutoplay extends BaseCommand {
@@ -30,17 +32,27 @@ public class CommandAutoplay extends BaseCommand {
 
         AutoplayGuilds.add(event.getGuild().getIdLong());
         AudioTrack track = PlayerManager.getInstance().getMusicManager(event.getGuild()).audioPlayer.getPlayingTrack();
-        event.replyEmbeds(createQuickEmbed("✅ ♾\uFE0F", event.localise("cmd.ap.isAutoplaying")));
 
-        if (track == null) {
-            return;
-        }
+        EmbedBuilder loading = new EmbedBuilder();
+        loading.setColor(botColour);
+        loading.setTitle("♾\uFE0F");
+        loading.setDescription(event.localise("cmd.ap.loadingTracks"));
 
-        long guildId = event.getGuild().getIdLong();
-        CompletableFuture.runAsync(() -> {
-            List<AutoplayTarget> songs = ListenBrainzManager.getSimilarTargets(track, guildId, ListenBrainzManager.AUTOPLAY_BATCH);
-            PlayerManager.getInstance().loadAutoplayBatch(event, songs, guildId);
-        });
+        event.replyEmbeds(response -> {
+            if (track == null) {
+                response.editMessageEmbeds(createQuickEmbed("✅ ♾\uFE0F", event.localise("cmd.ap.isAutoplaying")));
+                return;
+            }
+            long guildId = event.getGuild().getIdLong();
+            CompletableFuture.runAsync(() -> {
+                List<AutoplayTarget> songs = ListenBrainzManager.getSimilarTargets(track, guildId, ListenBrainzManager.AUTOPLAY_BATCH);
+                if (songs.isEmpty()) {
+                    response.editMessageEmbeds(createQuickEmbed("✅ ♾\uFE0F", event.localise("cmd.ap.isAutoplaying")));
+                    return;
+                }
+                PlayerManager.getInstance().loadAutoplayBatch(event, songs, guildId, response);
+            });
+        }, loading.build());
     }
 
     @Override
