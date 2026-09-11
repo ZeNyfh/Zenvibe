@@ -14,7 +14,7 @@ import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -66,6 +66,10 @@ public class TrackScheduler extends AudioEventAdapter {
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
 
+        if (!endReason.mayStartNext) {
+            return;
+        }
+
         PlayerManager.TrackData trackData = (PlayerManager.TrackData) track.getUserData();
         GuildMessageChannelUnion originalEventChannel = (GuildMessageChannelUnion) getGuildChannelFromID(trackData.channelId);
         long guildID = trackData.guildId;
@@ -79,14 +83,13 @@ public class TrackScheduler extends AudioEventAdapter {
         guildFailCount.remove(guildID);
 
         if (endReason.mayStartNext) {
-            if (!trackData.wasSkipped) {
-                AudioChannelUnion channel = Objects.requireNonNull(Objects.requireNonNull(getBot().getGuildById(((PlayerManager.TrackData) track.getUserData()).guildId)).getSelfMember().getVoiceState()).getChannel();
-                vcScrobble(channel, track);
+            if (!Boolean.TRUE.equals(trackData.wasSkipped)) {
+                scrobbleFinishedTrack(track, guildID);
             }
             if (LoopGuilds.contains(guildID)) { // track is looping
                 AudioTrack loopTrack = track.makeClone();
                 this.player.startTrack(loopTrack, false);
-                trackLoops.put(guildID, trackLoops.get(guildID) + 1);
+                trackLoops.put(guildID, trackLoops.getOrDefault(guildID, 0) + 1);
                 return;
             }
             if (LoopQueueGuilds.contains(guildID)) { // queue is looping
@@ -96,7 +99,7 @@ public class TrackScheduler extends AudioEventAdapter {
                 return;
             }
 
-            if (AutoplayGuilds.contains(guildID)) { // is autoplaying
+            if (AutoplayGuilds.contains(guildID) && queue.isEmpty()) { // autoplay only after queued tracks
                 StringBuilder errorBuilder = new StringBuilder();
                 String searchTerm = LastFMManager.getSimilarSongs(track, guildID);
                 Map<String, String> locale = guildLocales.get(guildID);
@@ -144,6 +147,26 @@ public class TrackScheduler extends AudioEventAdapter {
         }
     }
 
+
+    private void scrobbleFinishedTrack(AudioTrack track, long guildID) {
+            try {
+                if (!LastFMManager.hasAPI) {
+                    return;
+                }
+                Guild guild = getBot().getGuildById(guildID);
+                if (guild == null || guild.getSelfMember().getVoiceState() == null) {
+                    return;
+                }
+                AudioChannelUnion channel = guild.getSelfMember().getVoiceState().getChannel();
+                if (channel != null) {
+                    vcScrobble(channel, track);
+                }
+            } catch (RuntimeException exception) {
+                System.err.println("Could not scrobble finished track in guild " + guildID);
+                exception.printStackTrace();
+            }
+        });
+    }
 
     private void handleTrackFailure(GuildMessageChannelUnion originalEventChannel, AudioPlayer player, AudioTrack track) {
         long guildID = originalEventChannel.getGuild().getIdLong();
