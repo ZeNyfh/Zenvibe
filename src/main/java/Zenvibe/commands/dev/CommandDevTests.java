@@ -79,10 +79,7 @@ public class CommandDevTests extends BaseCommand {
             event.reply("No dev command provided");
         } else {
             String command = args[1];
-            if (command.equalsIgnoreCase("dirty-config")) { //Adds an illegal object to the json to invalidate it
-                event.getConfig().put("bad-value", new Exception());
-                event.reply("Added something nonsensical to the config");
-            } else if (command.equalsIgnoreCase("test-buttons")) { //Testing for the button registration system
+            if (command.equalsIgnoreCase("test-buttons")) { //Testing for the button registration system
                 EmbedBuilder eb = new EmbedBuilder();
                 eb.setColor(botColour);
                 eb.setDescription("description text");
