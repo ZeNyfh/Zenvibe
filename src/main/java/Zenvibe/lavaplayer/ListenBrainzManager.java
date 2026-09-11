@@ -17,7 +17,7 @@ import static Zenvibe.lavaplayer.MetaBrainzClient.postJson;
 import static Zenvibe.lavaplayer.MetaBrainzClient.text;
 
 public final class ListenBrainzManager {
-    public static final int AUTOPLAY_BATCH = 10;
+    public static final int AUTOPLAY_BATCH = 5;
 
     private static final String LABS = "https://labs.api.listenbrainz.org";
     private static final String MB = "https://musicbrainz.org/ws/2";
