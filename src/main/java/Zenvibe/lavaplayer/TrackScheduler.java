@@ -22,6 +22,7 @@ import static Zenvibe.CommandEvent.createQuickError;
 import static Zenvibe.Main.*;
 import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
+import static Zenvibe.lavaplayer.LastFMManager.vcUpdateNowPlaying;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
 import static Zenvibe.managers.EmbedManager.toSimpleTimestamp;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
@@ -61,6 +62,11 @@ public class TrackScheduler extends AudioEventAdapter {
         }
         nextTrack();
         return this.player.getPlayingTrack() != null;
+    }
+
+    @Override
+    public void onTrackStart(AudioPlayer player, AudioTrack track) {
+        updateNowPlayingForTrack(track);
     }
 
     @Override
@@ -147,6 +153,32 @@ public class TrackScheduler extends AudioEventAdapter {
         }
     }
 
+
+    private void updateNowPlayingForTrack(AudioTrack track) {
+        PlayerManager.TrackData trackData = (PlayerManager.TrackData) track.getUserData();
+        if (trackData == null) {
+            return;
+        }
+        long guildID = trackData.guildId;
+        CompletableFuture.runAsync(() -> {
+            try {
+                if (!LastFMManager.hasAPI) {
+                    return;
+                }
+                Guild guild = getBot().getGuildById(guildID);
+                if (guild == null || guild.getSelfMember().getVoiceState() == null) {
+                    return;
+                }
+                AudioChannelUnion channel = guild.getSelfMember().getVoiceState().getChannel();
+                if (channel != null) {
+                    vcUpdateNowPlaying(channel, track);
+                }
+            } catch (RuntimeException exception) {
+                System.err.println("Could not update Last.fm now playing in guild " + guildID);
+                exception.printStackTrace();
+            }
+        });
+    }
 
     private void scrobbleFinishedTrack(AudioTrack track, long guildID) {
         CompletableFuture.runAsync(() -> {

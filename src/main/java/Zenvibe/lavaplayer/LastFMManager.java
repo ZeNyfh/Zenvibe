@@ -176,11 +176,19 @@ public class LastFMManager {
     }
 
     public static void vcScrobble(AudioChannelUnion channel, AudioTrack track) {
+        forEachScrobblingMember(channel, (userId) -> scrobble(track, userId));
+    }
+
+    public static void vcUpdateNowPlaying(AudioChannelUnion channel, AudioTrack track) {
+        forEachScrobblingMember(channel, (userId) -> updateNowPlaying(track, userId));
+    }
+
+    private static void forEachScrobblingMember(AudioChannelUnion channel, LastFmTrackAction action) {
         for (Member member : Objects.requireNonNull(channel).getMembers()) {
             String session = GuildDataManager.database().lastFmSession(member.getId());
             if (session != null && !session.startsWith("REQUEST")) {
                 try {
-                    scrobble(track, member.getId());
+                    action.run(member.getId());
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -188,16 +196,45 @@ public class LastFMManager {
         }
     }
 
-    public static void scrobble(AudioTrack track, String userID) throws Exception {
-        if (APIKEY == null) {
-            throw new IllegalStateException("APIKEY is null, cannot scrobble.");
-        }
-        String chosenByUser = "0"; // not chosen by the user
+    @FunctionalInterface
+    private interface LastFmTrackAction {
+        void run(String userId) throws Exception;
+    }
 
+    public static void scrobble(AudioTrack track, String userID) throws Exception {
+        TreeMap<String, String> params = buildAuthenticatedTrackParams(track, userID, "track.scrobble");
+        if (params == null) {
+            return;
+        }
+
+        String chosenByUser = "0";
         PlayerManager.TrackData trackData = (PlayerManager.TrackData) track.getUserData();
         Guild guild = getGuildChannelFromID(trackData.channelId).getGuild();
-        if (((PlayerManager.TrackData) track.getUserData()).username.equalsIgnoreCase(Objects.requireNonNull(guild.getMemberById(userID)).getEffectiveName())) {
-            chosenByUser = "1"; // chosen by the user
+        if (trackData.username.equalsIgnoreCase(Objects.requireNonNull(guild.getMemberById(userID)).getEffectiveName())) {
+            chosenByUser = "1";
+        }
+
+        params.put("chosenByUser", chosenByUser);
+        params.put("timestamp", String.valueOf(Instant.now().getEpochSecond()));
+        postAuthenticatedMethod(params, "Scrobble");
+    }
+
+    public static void updateNowPlaying(AudioTrack track, String userID) throws Exception {
+        TreeMap<String, String> params = buildAuthenticatedTrackParams(track, userID, "track.updateNowPlaying");
+        if (params == null) {
+            return;
+        }
+        postAuthenticatedMethod(params, "NowPlaying");
+    }
+
+    private static TreeMap<String, String> buildAuthenticatedTrackParams(AudioTrack track, String userID, String method) {
+        if (APIKEY == null) {
+            throw new IllegalStateException("APIKEY is null, cannot call " + method + ".");
+        }
+
+        String sessionKey = GuildDataManager.database().lastFmSession(userID);
+        if (sessionKey == null || sessionKey.startsWith("REQUEST")) {
+            return null;
         }
 
         String artistName = track.getInfo().author;
@@ -207,39 +244,35 @@ public class LastFMManager {
             songName = getStreamSongNow(track.getInfo().uri)[0];
         }
 
-        if (songName.isEmpty() || artistName.isEmpty()) {
-            return;
+        if (songName.isEmpty() || artistName == null || artistName.isEmpty()) {
+            return null;
         }
 
         if (songName.contains("-")) {
             songName = songName.split("-", 2)[1].trim();
         }
 
-        String method = "track.scrobble";
-        String timestamp = String.valueOf(Instant.now().getEpochSecond());
-        String duration = String.valueOf(track.getDuration() / 1000);
-        String format = "json";
-
-        String sessionKey = GuildDataManager.database().lastFmSession(userID);
-        if (sessionKey == null || sessionKey.startsWith("REQUEST")) return;
-
         TreeMap<String, String> params = new TreeMap<>();
         params.put("api_key", APIKEY);
         params.put("artist", artistName);
-        params.put("chosenByUser", chosenByUser);
-        params.put("duration", duration);
         params.put("method", method);
         params.put("sk", sessionKey);
-        params.put("timestamp", timestamp);
         params.put("track", songName);
 
         // Generate API signature
+        long durationSeconds = track.getDuration() / 1000;
+        if (durationSeconds > 0 && durationSeconds < 86400) {
+            params.put("duration", String.valueOf(durationSeconds));
+        }
+        return params;
+    }
+
+    private static void postAuthenticatedMethod(TreeMap<String, String> params, String actionLabel) throws Exception {
         StringBuilder sigBuilder = new StringBuilder();
         for (Map.Entry<String, String> entry : params.entrySet()) {
             sigBuilder.append(entry.getKey()).append(entry.getValue());
         }
         sigBuilder.append(LASTFMSECRET);
-
         String apiSignature = getMD5Hash(sigBuilder.toString());
 
         // Prepare POST data
@@ -249,7 +282,7 @@ public class LastFMManager {
             postData.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
         }
         postData.append("&api_sig=").append(apiSignature);
-        postData.append("&format=").append(format);
+        postData.append("&format=json");
 
         HttpURLConnection conn = (HttpURLConnection) URI.create(APIURL).toURL().openConnection();
         conn.setRequestMethod("POST");
@@ -271,7 +304,7 @@ public class LastFMManager {
                     errorResponse.append(line);
                 }
             }
-            throw new Exception("Scrobble failed, HTTP code: " + code + ", Response: " + errorResponse);
+            throw new Exception(actionLabel + " failed, HTTP code: " + code + ", Response: " + errorResponse);
         }
     }
 
