@@ -49,14 +49,16 @@ public class CommandBlockChannel extends BaseCommand {
                             event.replyEmbeds(event.createQuickError(event.localise("cmd.bc.alreadyBlocked")));
                             return;
                         }
-                        blockedChannels.add(targetChannel);
+                        Zenvibe.managers.GuildDataManager.database().changeMemberships(event.getGuild().getIdLong(),
+                                java.util.Map.of("BlockedChannels", java.util.List.of(targetChannel)), true);
                         event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.bc.added", +guildChannel.getIdLong())));
                     } else if (args[1].equalsIgnoreCase("remove")) {
                         if (!blockedChannels.contains(guildChannel.getId())) {
                             event.replyEmbeds(event.createQuickError(event.localise("cmd.bc.notBlocked")));
                             return;
                         }
-                        blockedChannels.remove(targetChannel);
+                        Zenvibe.managers.GuildDataManager.database().changeMemberships(event.getGuild().getIdLong(),
+                                java.util.Map.of("BlockedChannels", java.util.List.of(targetChannel)), false);
                         event.replyEmbeds(event.createQuickSuccess(event.localise("cmd.bc.removed", guildChannel.getIdLong())));
                     }
                     return;
