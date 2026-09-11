@@ -20,6 +20,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,6 +88,9 @@ public class LastFMManager {
     public static boolean hasAPI = false;
     private static String APIKEY = null;
     private static String LASTFMSECRET = null;
+    private static final Set<String> pendingAuthPolls = ConcurrentHashMap.newKeySet();
+    private static final long AUTH_POLL_MS = 5_000L;
+    private static final long AUTH_TIMEOUT_MS = 10 * 60_000L;
 
     public static void Init() {
         Dotenv dotenv = loadEnvironment();
@@ -192,19 +197,35 @@ public class LastFMManager {
             return null;
         }
 
-        String artistName = track.getInfo().author;
-        String songName = filterMetadata(track.getInfo().title);
+        String rawArtist = track.getInfo().author == null ? "" : track.getInfo().author;
+        String rawTitle = track.getInfo().title == null ? "" : track.getInfo().title;
+        if (track.getInfo().isStream) {
+            String[] nowPlaying = getStreamSongNow(track.getInfo().uri);
+            if (nowPlaying != null && nowPlaying[0] != null && !nowPlaying[0].isBlank()) {
+                rawTitle = nowPlaying[0];
+            }
+        }
 
-        if (track.getInfo().isStream && songName.isEmpty()) {
-            songName = getStreamSongNow(track.getInfo().uri)[0];
+        String artistName;
+        String songName;
+        ResolvedRecording resolved = ListenBrainzManager.resolve(rawArtist, rawTitle);
+        if (resolved != null) {
+            artistName = resolved.artist();
+            songName = resolved.title();
+        } else {
+            List<TrackMetadataCandidate> candidates = TrackMetadataParser.candidates(rawArtist, rawTitle);
+            if (!candidates.isEmpty()) {
+                TrackMetadataCandidate best = candidates.getFirst();
+                artistName = best.artist();
+                songName = best.title();
+            } else {
+                artistName = rawArtist;
+                songName = filterMetadata(rawTitle);
+            }
         }
 
         if (songName.isEmpty() || artistName == null || artistName.isEmpty()) {
             return null;
-        }
-
-        if (songName.contains("-")) {
-            songName = songName.split("-", 2)[1].trim();
         }
 
         TreeMap<String, String> params = new TreeMap<>();
@@ -314,7 +335,49 @@ public class LastFMManager {
         return "http://www.last.fm/api/auth/?api_key=" + APIKEY + "&token=" + unauthToken;
     }
 
-    public static String fetchWebServiceSession(String token) throws Exception { //
+    /**
+     * Polls {@code auth.getSession} until the user finishes the Last.fm auth page (or timeout).
+     * On success the REQUEST token is replaced with a real session key.
+     */
+    public static void pollAuthorisation(String userId, String token, Runnable onSuccess, Runnable onTimeout) {
+        if (!pendingAuthPolls.add(userId)) {
+            return;
+        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                long deadline = System.currentTimeMillis() + AUTH_TIMEOUT_MS;
+                while (System.currentTimeMillis() < deadline) {
+                    Thread.sleep(AUTH_POLL_MS);
+                    String saved = GuildDataManager.database().lastFmSession(userId);
+                    if (saved == null || !saved.equals("REQUEST" + token)) {
+                        return;
+                    }
+                    try {
+                        String session = tryFetchWebServiceSession(token);
+                        if (session != null) {
+                            GuildDataManager.database().saveLastFmSession(userId, session);
+                            onSuccess.run();
+                            return;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Last.fm auth poll error for " + userId + ": " + e.getMessage());
+                    }
+                }
+                String saved = GuildDataManager.database().lastFmSession(userId);
+                if (saved != null && saved.equals("REQUEST" + token)) {
+                    GuildDataManager.database().removeLastFmSession(userId);
+                }
+                onTimeout.run();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                pendingAuthPolls.remove(userId);
+            }
+        });
+    }
+
+    /** @return session key, or {@code null} if the token is not authorised yet */
+    public static String tryFetchWebServiceSession(String token) throws Exception {
         String method = "auth.getSession";
 
         String url = APIURL + "?method=" + method
@@ -327,12 +390,29 @@ public class LastFMManager {
         conn.setRequestMethod("GET");
         conn.setRequestProperty("User-Agent", "Zenvibe/" + botVersion);
 
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-            StringBuilder resp = new StringBuilder();
+        StringBuilder resp = new StringBuilder();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(
+                conn.getResponseCode() >= 400 ? conn.getErrorStream() : conn.getInputStream()))) {
             String line;
             while ((line = in.readLine()) != null) resp.append(line);
-            JsonBrowser browser = JsonBrowser.parse(resp.toString());
-            return browser.get("session").get("key").safeText();
         }
+        JsonBrowser browser = JsonBrowser.parse(resp.toString());
+        if (!browser.get("error").isNull()) {
+            long code = browser.get("error").asLong(0);
+            if (code == 14) { // token not authorised yet
+                return null;
+            }
+            throw new Exception("auth.getSession error " + code + ": " + browser.get("message").safeText());
+        }
+        String key = browser.get("session").get("key").safeText();
+        return key == null || key.isBlank() ? null : key;
+    }
+
+    public static String fetchWebServiceSession(String token) throws Exception {
+        String key = tryFetchWebServiceSession(token);
+        if (key == null) {
+            throw new Exception("This token has not been authorized");
+        }
+        return key;
     }
 }
