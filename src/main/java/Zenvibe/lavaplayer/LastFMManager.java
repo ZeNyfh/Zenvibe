@@ -104,51 +104,6 @@ public class LastFMManager {
         APIKEY = key;
     }
 
-    public static String getSimilarSongs(AudioTrack track, Long guildID) {
-        if (APIKEY == null) {
-            return "noapi";
-        }
-
-        String songName = filterMetadata(track.getInfo().title.toLowerCase());
-        // TODO: should be replaced with actual logic checking if last.fm has either the author or the artist name in the title.
-        String artistName = (track.getInfo().author.isEmpty() || track.getInfo().author == null || track.getInfo().title.contains("-"))
-                ? filterMetadata((track.getInfo().title).toLowerCase())
-                : (track.getInfo().author).toLowerCase();
-
-        songName = URLEncoder.encode(songName, StandardCharsets.UTF_8);
-        artistName = URLEncoder.encode(artistName, StandardCharsets.UTF_8);
-
-        StringBuilder urlStringBuilder = new StringBuilder();
-        urlStringBuilder.append("http://ws.audioscrobbler.com/2.0/?method=track.getSimilar&limit=5&autocorrect=1&artist=").append(artistName).append("&track=").append(songName);
-        urlStringBuilder.append("&api_key=").append(APIKEY).append("&format=json");
-        String urlString = urlStringBuilder.toString();
-
-        StringBuilder response = new StringBuilder();
-        try {
-            URL url = URI.create(urlString).toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("User-Agent", "Zenvibe/" + botVersion); // identifiable User-Agent header as requested by last.fm
-
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-            }
-            connection.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "";
-        }
-
-        if (response.toString().startsWith("{\"error\":6,\"message\":\"Track not found\"") || response.toString().startsWith("{}")) {
-            return "notfound";
-        }
-        String trackToSearch = extractTracks(response.toString(), guildID);
-        return trackToSearch.isEmpty() ? "none" : trackToSearch;
-    }
-
     public static String filterMetadata(String track) {
         Pattern bracketContent = Pattern.compile("(?i)[(\\[{<«【《『„](.*)[)\\]}>»】》』“]");
         Matcher matcher = bracketContent.matcher(track);
@@ -379,31 +334,5 @@ public class LastFMManager {
             JsonBrowser browser = JsonBrowser.parse(resp.toString());
             return browser.get("session").get("key").safeText();
         }
-    }
-
-    private static String extractTracks(String rawJson, long guildID) {
-        JsonBrowser parsedJson;
-        try {
-            parsedJson = JsonBrowser.parse(rawJson);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "";
-        }
-
-        JsonBrowser trackInfoArray = parsedJson.get("similartracks").get("track").index(0);
-        String artistName = trackInfoArray.get("artist").get("name").text();
-        String songName = trackInfoArray.get("name").text();
-
-        StringBuilder builder = new StringBuilder();
-        builder.append(artistName).append(" - ").append(songName);
-
-        if (autoPlayedTracks.get(guildID).contains(builder.toString())) {
-            builder.setLength(0);
-        } else {
-            List<String> list = autoPlayedTracks.get(guildID);
-            list.add(builder.toString().toLowerCase());
-            autoPlayedTracks.put(guildID, list);
-        }
-        return builder.toString();
     }
 }
