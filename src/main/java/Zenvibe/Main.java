@@ -60,7 +60,6 @@ import java.util.jar.JarFile;
 import static Zenvibe.CommandEvent.createQuickError;
 import static Zenvibe.CommandEvent.createQuickSuccess;
 import static Zenvibe.lavaplayer.AudioPlayerSendHandler.totalBytesSent;
-import static Zenvibe.managers.GuildDataManager.GetConfig;
 import static Zenvibe.managers.GuildDataManager.SaveConfigs;
 import static Zenvibe.managers.LocaleManager.languages;
 import static Zenvibe.managers.LocaleManager.managerLocalise;
@@ -94,7 +93,6 @@ public class Main extends ListenerAdapter {
     public static String botPrefix = "";
     public static String readableBotPrefix = "";
     public static boolean ignoreFiles = false;
-    public static JSONObject commandUsageTracker;
     private static JDA bot;
     private static boolean isIDE = false;
 
@@ -132,11 +130,7 @@ public class Main extends ListenerAdapter {
             throw new NullPointerException("TOKEN is not set in the process environment or .env file");
         }
         GuildDataManager.Init();
-        commandUsageTracker = GetConfig("usage-stats");
-        // Initialize totalBytesSent in commandUsageTracker if it doesn't exist
-        commandUsageTracker.putIfAbsent("totalBytesSent", 0L);
-        // Load the saved totalBytesSent value from commandUsageTracker into the AtomicLong
-        totalBytesSent.set((Long) commandUsageTracker.get("totalBytesSent"));
+        totalBytesSent.set(GuildDataManager.database().usage().getOrDefault("totalBytesSent", 0L));
         LastFMManager.Init();
         PlayerManager.getInstance();
         loadCommandClasses();
@@ -297,9 +291,8 @@ public class Main extends ListenerAdapter {
     private static void setupTasks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> GuildDataManager.SaveQueues(bot)));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            // Add totalBytesSent to commandUsageTracker before saving
-            commandUsageTracker.put("totalBytesSent", totalBytesSent.get());
-            GuildDataManager.SaveConfigs();
+            try { GuildDataManager.SaveConfigs(); }
+            finally { GuildDataManager.Close(); }
         }));
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
@@ -343,9 +336,9 @@ public class Main extends ListenerAdapter {
     private static void registerCommand(BaseCommand command) {
         command.Init();
         ratelimitTracker.put(command, new HashMap<>());
-        commandUsageTracker.putIfAbsent(command.getNames()[0], 0L);
-        commandUsageTracker.putIfAbsent("slashcommand", 0L);
-        commandUsageTracker.putIfAbsent("prefixcommand", 0L);
+        GuildDataManager.database().ensureUsageMetric(command.getNames()[0]);
+        GuildDataManager.database().ensureUsageMetric("slashcommand");
+        GuildDataManager.database().ensureUsageMetric("prefixcommand");
         commands.add(command);
         SlashCommandData slashCommand = Commands.slash(command.getNames()[0], command.getDescription());
         command.ProvideOptions(slashCommand);
@@ -422,8 +415,6 @@ public class Main extends ListenerAdapter {
     }
 
     public static void killMain() {
-        // Add totalBytesSent to commandUsageTracker before saving
-        commandUsageTracker.put("totalBytesSent", totalBytesSent.get());
         SaveConfigs();
         try {
             Thread.sleep(1000);
@@ -584,8 +575,7 @@ public class Main extends ListenerAdapter {
             } else {
                 //run command
                 String primaryName = Command.getNames()[0];
-                commandUsageTracker.put(primaryName, Long.parseLong(String.valueOf(commandUsageTracker.get(primaryName))) + 1); //Nightmarish type conversion but I'm not seeing better
-                commandUsageTracker.put("slashcommand", Long.parseLong(String.valueOf(commandUsageTracker.get("slashcommand"))) + 1);
+                GuildDataManager.database().recordCommand(primaryName, "slashcommand");
                 commandThreads.submit(() -> {
                     try {
                         Command.executeWithChecks(new CommandEvent(event));
@@ -617,8 +607,7 @@ public class Main extends ListenerAdapter {
             } else {
                 //run command
                 String primaryName = Command.getNames()[0];
-                commandUsageTracker.put(primaryName, Long.parseLong(String.valueOf(commandUsageTracker.get(primaryName))) + 1); //Nightmarish type conversion but I'm not seeing better
-                commandUsageTracker.put("prefixcommand", Long.parseLong(String.valueOf(commandUsageTracker.get("prefixcommand"))) + 1);
+                GuildDataManager.database().recordCommand(primaryName, "prefixcommand");
                 commandThreads.submit(() -> {
                     try {
                         Command.executeWithChecks(new CommandEvent(event));
