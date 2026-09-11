@@ -28,3 +28,4 @@ build.sh
 !src/main/resources/
 !src/main/resources/sql/
 !src/main/resources/sql/*.sql
+yt-cipher/
