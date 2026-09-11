@@ -4,6 +4,7 @@ import Zenvibe.BaseCommand;
 import Zenvibe.CommandEvent;
 import Zenvibe.CommandStateChecker.Check;
 import Zenvibe.lavaplayer.ListenBrainzManager;
+import Zenvibe.lavaplayer.AutoplayTarget;
 import Zenvibe.lavaplayer.PlayerManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
@@ -37,7 +38,7 @@ public class CommandAutoplay extends BaseCommand {
 
         long guildId = event.getGuild().getIdLong();
         CompletableFuture.runAsync(() -> {
-            List<String> songs = ListenBrainzManager.getSimilarSongs(track, guildId, ListenBrainzManager.AUTOPLAY_BATCH);
+            List<AutoplayTarget> songs = ListenBrainzManager.getSimilarTargets(track, guildId, ListenBrainzManager.AUTOPLAY_BATCH);
             PlayerManager.getInstance().loadAutoplayBatch(event, songs, guildId);
         });
     }

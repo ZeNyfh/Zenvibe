@@ -45,7 +45,7 @@ public class CommandForceSkip extends BaseCommand {
                 if (searchTerm.equals("notfound") || searchTerm.equals("none") || searchTerm.isEmpty()) {
                     return;
                 }
-                PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + searchTerm, false, true);
+                PlayerManager.getInstance().loadAndPlay(event, searchTerm, false, true);
             });
         }
         if (event.getArgs().length > 1 && event.getArgs()[1].matches("^\\d+$")) { // autoplay logic shouldn't exist here

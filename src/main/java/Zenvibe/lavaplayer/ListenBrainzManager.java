@@ -25,27 +25,30 @@ public final class ListenBrainzManager {
             "session_based_days_7500_session_300_contribution_5_threshold_15_limit_50_skip_30";
 
     private static final Map<String, ResolvedRecording> CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, List<String>> URL_CACHE = new ConcurrentHashMap<>();
 
     private ListenBrainzManager() {
     }
 
+    /** @return load query, or {@code "notfound"} / {@code "none"} / {@code ""} */
     public static String getSimilarSongs(AudioTrack track, long guildID) {
         ResolvedRecording seed = resolve(track);
         if (seed == null) return "notfound";
 
-        List<String> songs = collectSimilarSongs(seed, guildID, 1);
+        List<AutoplayTarget> songs = collectSimilar(seed, guildID, 1);
         if (songs == null) return "";
-        return songs.isEmpty() ? "none" : songs.getFirst();
+        if (songs.isEmpty()) return "none";
+        return songs.getFirst().toLoadQuery(PlayerManager.hasSpotify());
     }
 
-    public static List<String> getSimilarSongs(AudioTrack track, long guildID, int limit) {
+    public static List<AutoplayTarget> getSimilarTargets(AudioTrack track, long guildID, int limit) {
         ResolvedRecording seed = resolve(track);
         if (seed == null) return List.of();
-        List<String> songs = collectSimilarSongs(seed, guildID, limit);
+        List<AutoplayTarget> songs = collectSimilar(seed, guildID, limit);
         return songs == null ? List.of() : songs;
     }
 
-    private static List<String> collectSimilarSongs(ResolvedRecording seed, long guildID, int limit) {
+    private static List<AutoplayTarget> collectSimilar(ResolvedRecording seed, long guildID, int limit) {
         remember(guildID, seed.mbid());
 
         JsonBrowser similar = getJson(LABS + "/similar-recordings/json?recording_mbids="
@@ -53,7 +56,7 @@ public final class ListenBrainzManager {
         if (similar == null || !similar.isList()) return null;
 
         List<String> played = autoPlayedTracks.get(guildID);
-        List<String> out = new ArrayList<>(Math.max(1, limit));
+        List<AutoplayTarget> out = new ArrayList<>(Math.max(1, limit));
         for (JsonBrowser row : similar.values()) {
             if (out.size() >= limit) break;
             String mbid = text(row, "recording_mbid");
@@ -62,9 +65,43 @@ public final class ListenBrainzManager {
             if (mbid.isEmpty() || artist.isEmpty() || title.isEmpty()) continue;
             if (played != null && played.contains(mbid)) continue;
             remember(guildID, mbid);
-            out.add(artist + " - " + title);
+            out.add(new AutoplayTarget(artist, title, mbid, fetchExternalUrls(mbid)));
         }
         return out;
+    }
+
+    /** MusicBrainz recording URL relations (Spotify / YouTube / SoundCloud / …), cached per MBID. */
+    static List<String> fetchExternalUrls(String mbid) {
+        if (mbid == null || mbid.isBlank()) return List.of();
+        List<String> cached = URL_CACHE.get(mbid);
+        if (cached != null) return cached;
+
+        JsonBrowser root = getJson(MB + "/recording/" + enc(mbid) + "?inc=url-rels&fmt=json");
+        List<String> urls = new ArrayList<>();
+        if (root != null) {
+            JsonBrowser relations = root.get("relations");
+            if (relations.isList()) {
+                for (JsonBrowser rel : relations.values()) {
+                    String type = text(rel, "type").toLowerCase(Locale.ROOT);
+                    if (!(type.contains("stream") || type.contains("download") || type.equals("youtube"))) {
+                        continue;
+                    }
+                    String resource = text(rel.get("url"), "resource");
+                    if (resource.isEmpty()) continue;
+                    String lower = resource.toLowerCase(Locale.ROOT);
+                    if (lower.contains("spotify.com/")
+                            || lower.contains("youtube.com/")
+                            || lower.contains("youtu.be/")
+                            || lower.contains("soundcloud.com/")
+                            || lower.contains("bandcamp.com/")) {
+                        urls.add(resource);
+                    }
+                }
+            }
+        }
+        List<String> frozen = AutoplayTarget.mergeUrls(urls);
+        URL_CACHE.put(mbid, frozen);
+        return frozen;
     }
 
     public static String resolveRecordingMbid(AudioTrack track) {

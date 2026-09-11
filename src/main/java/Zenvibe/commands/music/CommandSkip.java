@@ -74,7 +74,7 @@ public class CommandSkip extends BaseCommand {
                     if (searchTerm.equals("notfound") || searchTerm.equals("none") || searchTerm.isEmpty()) {
                         return;
                     }
-                    PlayerManager.getInstance().loadAndPlay(event, "ytsearch:" + searchTerm, false, true);
+                    PlayerManager.getInstance().loadAndPlay(event, searchTerm, false, true);
                 });
             }
             musicManager.scheduler.nextTrack();

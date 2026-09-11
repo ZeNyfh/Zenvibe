@@ -108,7 +108,7 @@ public class TrackScheduler extends AudioEventAdapter {
             if (AutoplayGuilds.contains(guildID) && queue.isEmpty()) { // autoplay only after queued tracks
                 Object eventOrChannel = trackData.eventOrChannel;
                 CompletableFuture.runAsync(() -> {
-                    List<String> songs = ListenBrainzManager.getSimilarSongs(track, guildID, ListenBrainzManager.AUTOPLAY_BATCH);
+                    List<AutoplayTarget> songs = ListenBrainzManager.getSimilarTargets(track, guildID, ListenBrainzManager.AUTOPLAY_BATCH);
                     if (songs.isEmpty()) {
                         StringBuilder errorBuilder = new StringBuilder("❌ **")
                                 .append(managerLocalise("main.error", lang))

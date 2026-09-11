@@ -36,8 +36,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,6 +60,10 @@ public class PlayerManager {
     }};
     private static PlayerManager INSTANCE;
     private static boolean hasSpotify;
+
+    public static boolean hasSpotify() {
+        return hasSpotify;
+    }
     private final Map<Long, GuildMusicManager> musicManagers;
     private final AudioPlayerManager audioPlayerManager;
 
@@ -260,8 +264,8 @@ public class PlayerManager {
         return embed.build();
     }
 
-    public void loadAutoplayBatch(Object eventOrChannel, List<String> searchTerms, long guildId) {
-        if (searchTerms == null || searchTerms.isEmpty()) {
+    public void loadAutoplayBatch(Object eventOrChannel, List<AutoplayTarget> targets, long guildId) {
+        if (targets == null || targets.isEmpty()) {
             return;
         }
         Guild guild = getBot().getGuildById(guildId);
@@ -272,9 +276,10 @@ public class PlayerManager {
         int queueBefore = musicManager.scheduler.queue.size();
         boolean idleBefore = musicManager.audioPlayer.getPlayingTrack() == null;
 
-        List<CompletableFuture<LoadResult>> loads = new ArrayList<>(searchTerms.size());
-        for (String searchTerm : searchTerms) {
-            loads.add(loadAndPlay(eventOrChannel, "ytsearch:" + searchTerm, false, true));
+        List<CompletableFuture<LoadResult>> loads = new ArrayList<>(targets.size());
+        for (AutoplayTarget target : targets) {
+            loads.add(loadAndPlay(eventOrChannel, target.toLoadQuery(hasSpotify), false, true,
+                    target.artist(), target.title()));
         }
         CompletableFuture.allOf(loads.toArray(CompletableFuture[]::new)).whenComplete((ignored, error) -> {
             if (error != null) {
@@ -328,10 +333,15 @@ public class PlayerManager {
      * @throws AssertionError If <code>eventOrChannel</code> is not an event or channel (mind blown).
      */
     public CompletableFuture<LoadResult> loadAndPlay(Object eventOrChannel, String trackUrl, boolean sendEmbed) {
-        return loadAndPlay(eventOrChannel, trackUrl, sendEmbed, false);
+        return loadAndPlay(eventOrChannel, trackUrl, sendEmbed, false, null, null);
     }
 
     public CompletableFuture<LoadResult> loadAndPlay(Object eventOrChannel, String trackUrl, boolean sendEmbed, boolean autoplayFill) {
+        return loadAndPlay(eventOrChannel, trackUrl, sendEmbed, autoplayFill, null, null);
+    }
+
+    public CompletableFuture<LoadResult> loadAndPlay(Object eventOrChannel, String trackUrl, boolean sendEmbed,
+                                                     boolean autoplayFill, String expectedArtist, String expectedTitle) {
         assert (eventOrChannel instanceof CommandEvent || eventOrChannel instanceof GuildMessageChannelUnion);
         CompletableFuture<LoadResult> loadResultFuture = new CompletableFuture<>();
         Guild commandGuild;
@@ -342,7 +352,6 @@ public class PlayerManager {
         }
         Map<String, String> locale = guildLocales.get(commandGuild.getIdLong());
 
-        // If the trackURL is for spotify but the manager can't use spotify, return NO_MATCHES (and embed if sendEmbed)
         if (trackUrl.toLowerCase().contains("spotify")) {
             if (!hasSpotify) {
                 if (sendEmbed) {
@@ -354,7 +363,6 @@ public class PlayerManager {
             }
         }
 
-        // Send loading embed and handle response asynchronously
         if (sendEmbed) {
             EmbedBuilder loadingEmbed = new EmbedBuilder();
             loadingEmbed.setColor(botColour);
@@ -362,34 +370,29 @@ public class PlayerManager {
 
             if (eventOrChannel instanceof CommandEvent event) {
                 event.replyEmbeds(response -> {
-                    loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, response, autoplayFill, 0);
+                    loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, response,
+                            autoplayFill, expectedArtist, expectedTitle, 0);
                 }, loadingEmbed.build());
             } else {
                 ((GuildMessageChannelUnion) eventOrChannel).sendMessageEmbeds(loadingEmbed.build()).queue();
-                loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null, autoplayFill, 0);
+                loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null,
+                        autoplayFill, expectedArtist, expectedTitle, 0);
             }
         } else {
-            loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null, autoplayFill, 0);
+            loadAndPlayWithResponse(eventOrChannel, trackUrl, commandGuild, locale, loadResultFuture, null,
+                    autoplayFill, expectedArtist, expectedTitle, 0);
         }
 
         return loadResultFuture;
     }
 
-    /**
-     * Helper method that continues the loading process after the initial loading embed has been sent.
-     */
     private void loadAndPlayWithResponse(Object eventOrChannel, String trackUrl, Guild commandGuild,
                                          Map<String, String> locale, CompletableFuture<LoadResult> loadResultFuture,
-                                         CommandEvent.Response loadingResponse, boolean autoplayFill, int searchFallbacks) {
+                                         CommandEvent.Response loadingResponse, boolean autoplayFill,
+                                         String expectedArtist, String expectedTitle, int searchFallbacks) {
         final GuildMusicManager musicManager = this.getMusicManager(commandGuild);
 
         this.audioPlayerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
-            /**
-             * Sets user data for <code>audioTrack</code>, queues it on the guild's scheduler and (optionally)
-             * sends an embed.
-             *
-             * @param audioTrack    The <code>AudioTrack</code> which was loaded.
-             */
             @Override
             public void trackLoaded(AudioTrack audioTrack) {
                 audioTrack.setUserData(new TrackData(eventOrChannel));
@@ -400,12 +403,6 @@ public class PlayerManager {
                 loadResultFuture.complete(LoadResult.TRACK_LOADED);
             }
 
-            /**
-             * Handles queueing and embed building for playlists when loaded (assuming the <code>audioPlaylist</code>
-             * instance contains tracks).
-             *
-             * @param audioPlaylist The <code>AudioPlaylist</code> which was loaded.
-             */
             @Override
             public void playlistLoaded(AudioPlaylist audioPlaylist) {
                 Map<String, String> locale = guildLocales.get(commandGuild.getIdLong());
@@ -416,7 +413,7 @@ public class PlayerManager {
                 if (!tracks.isEmpty()) {
                     AudioTrack track = audioPlaylist.getSelectedTrack() == null ? tracks.getFirst() : audioPlaylist.getSelectedTrack();
                     if (autoplayFill) {
-                        track = pickAutoplaySearchResult(tracks);
+                        track = pickAutoplaySearchResult(tracks, expectedArtist, expectedTitle);
                     }
                     if (tracks.size() == 1 || audioPlaylist.isSearchResult() || isSearchLoad(trackUrl) || autoplayFill) {
                         musicManager.scheduler.queue(track);
@@ -453,10 +450,6 @@ public class PlayerManager {
                 loadResultFuture.complete(LoadResult.PLAYLIST_LOADED);
             }
 
-            /**
-             * Sends an embed to notify the user that the load query had no matching <code>AudioTrack</code> or
-             * <code>AudioPlaylist</code>.
-             */
             @Override
             public void noMatches() {
                 if (loadingResponse != null) {
@@ -466,12 +459,6 @@ public class PlayerManager {
                 loadResultFuture.complete(LoadResult.NO_MATCHES);
             }
 
-            /**
-             * Sends output to <code>System.err</code> and an embed in <code>eventOrChannel</code> of <code>CommandEvent</code> to notify bot host
-             * and user of an error occuring during the loading process.
-             *
-             * @param e The error that occurred during the loading process.
-             */
             @Override
             public void loadFailed(FriendlyException e) {
                 System.err.println("Track failed to load.\nURL: \"" + trackUrl + "\"\nReason: " + e.getMessage());
@@ -479,7 +466,8 @@ public class PlayerManager {
                 String fallbackTrackUrl = getSearchFallback(trackUrl);
                 if (isTimeoutFailure(e) && fallbackTrackUrl != null && searchFallbacks < FALLBACKCOUNT) {
                     System.err.println("Retrying YouTube search through YouTube Music after timeout.\nURL: \"" + trackUrl + "\"");
-                    loadAndPlayWithResponse(eventOrChannel, fallbackTrackUrl, commandGuild, locale, loadResultFuture, loadingResponse, autoplayFill, searchFallbacks + 1);
+                    loadAndPlayWithResponse(eventOrChannel, fallbackTrackUrl, commandGuild, locale, loadResultFuture,
+                            loadingResponse, autoplayFill, expectedArtist, expectedTitle, searchFallbacks + 1);
                     return;
                 }
 
@@ -496,13 +484,38 @@ public class PlayerManager {
         });
     }
 
-    private static AudioTrack pickAutoplaySearchResult(List<AudioTrack> tracks) {
-        int upper = Math.min(4, tracks.size());
-        int lower = Math.min(2, upper - 1);
-        if (lower < 0) {
-            return tracks.getFirst();
+    private static AudioTrack pickAutoplaySearchResult(List<AudioTrack> tracks, String expectedArtist, String expectedTitle) {
+        AudioTrack best = tracks.getFirst();
+        double bestScore = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < tracks.size(); i++) {
+            AudioTrack t = tracks.get(i);
+            double score = scoreAutoplayCandidate(t, expectedArtist, expectedTitle) - i * 0.02;
+            if (score > bestScore) {
+                bestScore = score;
+                best = t;
+            }
         }
-        return tracks.get(ThreadLocalRandom.current().nextInt(lower, upper));
+        return best;
+    }
+
+    private static double scoreAutoplayCandidate(AudioTrack track, String expectedArtist, String expectedTitle) {
+        String title = track.getInfo().title == null ? "" : track.getInfo().title;
+        String author = track.getInfo().author == null ? "" : track.getInfo().author;
+        String hay = (title + " " + author).toLowerCase(Locale.ROOT);
+        double score = 0;
+        if (expectedTitle != null && !expectedTitle.isBlank()) {
+            score += TrackMetadataParser.similarity(expectedTitle, title) * 3.0;
+        }
+        if (expectedArtist != null && !expectedArtist.isBlank()) {
+            score += TrackMetadataParser.similarity(expectedArtist, author) * 1.5;
+            score += TrackMetadataParser.similarity(expectedArtist, title) * 0.4;
+        }
+        if (hay.contains("official audio") || hay.contains("official video") || hay.contains("topic")) score += 1.2;
+        if (hay.contains("lyric")) score += 0.2;
+        if (hay.contains("live") || hay.contains("concert") || hay.contains("tour") || hay.contains("session at")) score -= 3.5;
+        if (hay.contains("cover") || hay.contains("karaoke") || hay.contains("nightcore") || hay.contains("sped up")
+                || hay.contains("slowed") || hay.contains("remix") || hay.contains("mashup")) score -= 2.0;
+        return score;
     }
 
     /**
