@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.BlockingQueue;
@@ -20,7 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static Zenvibe.CommandEvent.createQuickError;
 import static Zenvibe.Main.*;
-import static Zenvibe.lavaplayer.LastFMManager.filterMetadata;
 import static Zenvibe.lavaplayer.LastFMManager.vcScrobble;
 import static Zenvibe.lavaplayer.LastFMManager.vcUpdateNowPlaying;
 import static Zenvibe.managers.EmbedManager.createQuickEmbed;
@@ -106,47 +106,26 @@ public class TrackScheduler extends AudioEventAdapter {
             }
 
             if (AutoplayGuilds.contains(guildID) && queue.isEmpty()) { // autoplay only after queued tracks
-                StringBuilder errorBuilder = new StringBuilder();
-                String searchTerm = LastFMManager.getSimilarSongs(track, guildID);
-                Map<String, String> locale = guildLocales.get(guildID);
-                boolean canAutoPlay = true;
-
-                if (searchTerm.equals("notfound")) {
-                    errorBuilder.append("❌ **")
-                            .append(managerLocalise("main.error", lang))
-                            .append(":**\n")
-                            .append(managerLocalise("tsched.autoplay.notFound", lang, track.getInfo().title))
-                            .append("\n");
-                    canAutoPlay = false;
-                }
-                if (searchTerm.equals("none")) {
-                    errorBuilder.append("❌ **")
-                            .append(managerLocalise("main.error", lang))
-                            .append(":**\n")
-                            .append(managerLocalise("tsched.autoplay.noSimilar", lang));
-                    canAutoPlay = false;
-                }
-                if (searchTerm.isEmpty()) {
-                    errorBuilder.append("❌ **")
-                            .append(managerLocalise("main.error", lang))
-                            .append(":**\n")
-                            .append(managerLocalise("tsched.autoplay.unknownError", lang));
-                    canAutoPlay = false;
-                }
-
-                if (canAutoPlay) {
-                    // TODO: will be replaced by https://github.com/ZeNyfh/Zenvibe/pull/166
-                    String artistName = (track.getInfo().author.isEmpty() || track.getInfo().author == null)
-                            ? filterMetadata(track.getInfo().title.toLowerCase())
-                            : filterMetadata(track.getInfo().author.toLowerCase());
-                    String title = filterMetadata(track.getInfo().title.toLowerCase());
-                    PlayerManager.getInstance().loadAndPlay(trackData.eventOrChannel, "ytsearch:" + artistName + " " + title, true);
-                    createQuickEmbed(managerLocalise("tsched.autoplay.queued", lang), artistName + " - " + title);
-                } else { // cannot autoplay
-                    originalEventChannel.sendMessageEmbeds(createQuickError(errorBuilder.toString(), lang)).queue();
-                    // go to next track in the queue
-                    playNextTrack(player, originalEventChannel);
-                }
+                Object eventOrChannel = trackData.eventOrChannel;
+                CompletableFuture.runAsync(() -> {
+                    List<String> songs = ListenBrainzManager.getSimilarSongs(track, guildID, ListenBrainzManager.AUTOPLAY_BATCH);
+                    if (songs.isEmpty()) {
+                        StringBuilder errorBuilder = new StringBuilder("❌ **")
+                                .append(managerLocalise("main.error", lang))
+                                .append(":**\n");
+                        if (ListenBrainzManager.resolveRecordingMbid(track) == null) {
+                            errorBuilder.append(managerLocalise("tsched.autoplay.notFound", lang, track.getInfo().title)).append("\n");
+                        } else {
+                            errorBuilder.append(managerLocalise("tsched.autoplay.noSimilar", lang));
+                        }
+                        try {
+                            originalEventChannel.sendMessageEmbeds(createQuickError(errorBuilder.toString(), lang)).queue();
+                        } catch (InsufficientPermissionException ignored) {
+                        }
+                    } else {
+                        PlayerManager.getInstance().loadAutoplayBatch(eventOrChannel, songs, guildID);
+                    }
+                });
             } else { // is not autoplaying
                 playNextTrack(player, originalEventChannel);
             }
