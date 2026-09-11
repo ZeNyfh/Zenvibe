@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import java.util.*;
 
 import static Zenvibe.Main.botColour;
-import static Zenvibe.Main.commandUsageTracker;
+import Zenvibe.managers.GuildDataManager;
 
 public class CommandSendUsage extends BaseCommand {
     @Override
@@ -18,7 +18,8 @@ public class CommandSendUsage extends BaseCommand {
 
     @Override
     public void execute(CommandEvent event) {
-        Long[] values = (Long[]) commandUsageTracker.values().toArray(new Long[0]);
+        Map<String, Long> commandUsageTracker = GuildDataManager.database().usage();
+        Long[] values = commandUsageTracker.values().toArray(new Long[0]);
         Arrays.sort(values);
         Map<Long, List<String>> InverseReference = new HashMap<>();
         for (Object name : commandUsageTracker.keySet()) {
