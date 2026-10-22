@@ -95,6 +95,7 @@ public class Main extends ListenerAdapter {
     public static boolean ignoreFiles = false;
     private static JDA bot;
     private static boolean isIDE = false;
+    private static File runtimeRoot = new File(".");
 
     /**
      * Loads .env values when the file exists, but also permits deployments
@@ -120,8 +121,30 @@ public class Main extends ListenerAdapter {
         return dotenvValue == null || dotenvValue.isBlank() ? null : dotenvValue;
     }
 
+    public static File getRuntimeRoot() {
+        return runtimeRoot;
+    }
+
+    private static void resolveRuntimeRoot() throws URISyntaxException {
+        File location = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        if (location.isFile()) {
+            isIDE = false;
+            runtimeRoot = new File(".").getAbsoluteFile();
+            return;
+        }
+        isIDE = true;
+        for (File dir = location; dir != null; dir = dir.getParentFile()) {
+            if (new File(dir, "pom.xml").exists()) {
+                runtimeRoot = dir;
+                return;
+            }
+        }
+        runtimeRoot = new File(".").getAbsoluteFile();
+    }
+
     public static void main(String[] args) throws Exception {
-        OutputLogger.Init("log.log");
+        resolveRuntimeRoot();
+        OutputLogger.Init(new File(runtimeRoot, "logs"), "log.log");
 
         prepareEnvironment();
         Dotenv dotenv = loadEnvironment();
@@ -168,7 +191,7 @@ public class Main extends ListenerAdapter {
         if (Files.list(fullDir).findAny().isPresent()) {
             deleteFiles(fullDir.toAbsolutePath().toString());
         }
-        File logDir = new File("logs/");
+        File logDir = new File(runtimeRoot, "logs/");
         if (logDir.isDirectory()) {
             File[] logs = logDir.listFiles();
             if (logs != null) {

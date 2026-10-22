@@ -19,9 +19,14 @@ public class OutputLogger {
     public static final PrintStream err = System.err;
     private static final ByteArrayOutputStream MergedLogStream = new ByteArrayOutputStream();
     private static boolean INITIALISED = false;
+    private static File logDirectory;
     private static FileWriter logger;
     private static TimerTask logTask;
     private static boolean ReadyForTimestamp = true; // This is an awkward static with how its used but its needed
+
+    public static File getLogDirectory() {
+        return logDirectory != null ? logDirectory : new File("logs");
+    }
 
     // IMPLEMENTATION NOTES
     // Both TimestampedOutputStream and DualChannelOutputStream are proxy streams
@@ -47,27 +52,25 @@ public class OutputLogger {
 
     // Implements hooks into out/err and starts active logging
     // Automatically ZIPs the existing log if the logLocation given already exists
-    public static void Init(String logName) throws IOException {
+    public static void Init(File logDir, String logName) throws IOException {
         if (!INITIALISED) {
             INITIALISED = true;
-            File logDir = new File("logs/");
-            if (!logDir.exists() && !logDir.mkdir()) {
-                throw new SecurityException("Unable to make log folder at logs/");
+            logDirectory = logDir;
+            if (!logDir.exists() && !logDir.mkdirs()) {
+                throw new SecurityException("Unable to make log folder at " + logDir.getAbsolutePath());
             }
-            File logFile = new File("logs/" + logName);
+            File logFile = new File(logDir, logName);
             if (!logFile.exists() && !logFile.createNewFile()) {
-                throw new SecurityException("Unable to make log file at logs/" + logName);
+                throw new SecurityException("Unable to make log file at " + logFile.getAbsolutePath());
             }
             // If it already exists, zip it out of the way
             if (logFile.exists() && logFile.length() > 0) {
-                String outputZip = "logs/log_" + Instant.ofEpochMilli(
+                File outputZip = new File(logDir, "log_" + Instant.ofEpochMilli(
                         ((FileTime) Files.getAttribute(logFile.toPath(), "creationTime")).toMillis()
-                ).atZone(ZoneId.systemDefault()).toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".zip";
-                String logPath = logFile.getAbsolutePath();
+                ).atZone(ZoneId.systemDefault()).toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".zip");
                 try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(outputZip))) {
-                    File fileToZip = new File(logPath);
-                    zipOut.putNextEntry(new ZipEntry(fileToZip.getName()));
-                    Files.copy(fileToZip.toPath(), zipOut);
+                    zipOut.putNextEntry(new ZipEntry(logFile.getName()));
+                    Files.copy(logFile.toPath(), zipOut);
                 }
                 // Force the creationTime to update
                 Files.setAttribute(logFile.toPath(), "creationTime", FileTime.from(Instant.now()));
