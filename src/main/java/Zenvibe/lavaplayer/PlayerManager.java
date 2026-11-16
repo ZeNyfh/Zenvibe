@@ -79,7 +79,9 @@ public class PlayerManager {
         Client[] youtubeClients = new Client[]{
                 new MusicWithThumbnail(),
                 new Tv(),
-                new AndroidVrWithThumbnail(),
+                new TvHtml5SimplyWithThumbnail(),
+                new AndroidMusicWithThumbnail(),
+                new MWebWithThumbnail(),
                 new WebWithThumbnail(),
                 new WebEmbeddedWithThumbnail()
         };
