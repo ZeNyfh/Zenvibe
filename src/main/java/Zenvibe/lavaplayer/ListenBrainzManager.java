@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -53,21 +54,53 @@ public final class ListenBrainzManager {
 
         JsonBrowser similar = getJson(LABS + "/similar-recordings/json?recording_mbids="
                 + enc(seed.mbid()) + "&algorithm=" + enc(SIMILAR_ALGO));
-        if (similar == null || !similar.isList()) return null;
 
         List<String> played = autoPlayedTracks.get(guildID);
         List<AutoplayTarget> out = new ArrayList<>(Math.max(1, limit));
-        for (JsonBrowser row : similar.values()) {
+        if (similar != null && similar.isList()) {
+            for (JsonBrowser row : similar.values()) {
+                if (out.size() >= limit) break;
+                String mbid = text(row, "recording_mbid");
+                String artist = text(row, "artist_credit_name");
+                String title = text(row, "recording_name");
+                if (mbid.isEmpty() || artist.isEmpty() || title.isEmpty()) continue;
+                if (played != null && played.contains(mbid)) continue;
+                remember(guildID, mbid);
+                out.add(new AutoplayTarget(artist, title, mbid, fetchExternalUrls(mbid)));
+            }
+        }
+        if (out.size() < limit) {
+            fillSameArtist(out, seed, guildID, played, limit);
+        }
+        return out;
+    }
+
+    private static void fillSameArtist(List<AutoplayTarget> out, ResolvedRecording seed, long guildID,
+                                       List<String> played, int limit) {
+        String seedArtist = seed.artist();
+        if (seedArtist == null || seedArtist.isBlank()) return;
+
+        JsonBrowser list = postJson(LABS + "/recording-search/json",
+                "[{\"query\":" + jsonString(seedArtist) + "}]");
+        if (list == null || !list.isList()) return;
+
+        HashSet<String> seen = new HashSet<>();
+        seen.add(seed.mbid());
+        for (AutoplayTarget t : out) seen.add(t.mbid());
+        if (played != null) seen.addAll(played);
+
+        for (JsonBrowser row : list.values()) {
             if (out.size() >= limit) break;
             String mbid = text(row, "recording_mbid");
             String artist = text(row, "artist_credit_name");
             String title = text(row, "recording_name");
             if (mbid.isEmpty() || artist.isEmpty() || title.isEmpty()) continue;
-            if (played != null && played.contains(mbid)) continue;
+            if (seen.contains(mbid)) continue;
+            if (TrackMetadataParser.similarity(seedArtist, artist) < 0.8) continue;
+            seen.add(mbid);
             remember(guildID, mbid);
             out.add(new AutoplayTarget(artist, title, mbid, fetchExternalUrls(mbid)));
         }
-        return out;
     }
 
     /** MusicBrainz recording URL relations (Spotify / YouTube / SoundCloud / …), cached per MBID. */

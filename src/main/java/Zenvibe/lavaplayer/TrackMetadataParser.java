@@ -30,6 +30,14 @@ public final class TrackMetadataParser {
         add(best, artist, clean, 0.55 - penalty);
         add(best, artist, title, 0.45 - penalty);
 
+        if (artist.matches("(?i).*\\s*-\\s*Topic\\s*$")) {
+            String bare = artist.replaceFirst("(?i)\\s*-\\s*Topic\\s*$", "").trim();
+            if (!bare.isEmpty()) {
+                add(best, bare, clean, 0.9);
+                add(best, bare, title, 0.85);
+            }
+        }
+
         String splitSrc = clean.isBlank() ? title : clean;
         Matcher m = SPLIT.matcher(splitSrc);
         int n = 0;
@@ -96,18 +104,52 @@ public final class TrackMetadataParser {
         String x = cmp(a), y = cmp(b);
         if (x.isEmpty() || y.isEmpty()) return 0;
         if (x.equals(y)) return 1;
+        // Toni vs T.O.N.I. → cmp "toni" vs "t o n i"; collapsed forms match
+        if (x.replace(" ", "").equals(y.replace(" ", ""))) return 1;
         if (x.contains(y) || y.contains(x)) return 0.92;
         String[] xs = x.split(" "), ys = y.split(" ");
         int hits = 0;
         for (String t : xs) {
             for (String u : ys) {
-                if (t.equals(u)) {
+                if (tokenHit(t, u)) {
                     hits++;
                     break;
                 }
             }
         }
         return (double) hits / Math.max(xs.length, ys.length);
+    }
+
+    /** Exact match, or edit distance ≤1 for tokens long enough to absorb a typo. */
+    private static boolean tokenHit(String t, String u) {
+        if (t.equals(u)) return true;
+        if (t.length() < 6 || u.length() < 6) return false;
+        return editDistanceAtMost1(t, u);
+    }
+
+    private static boolean editDistanceAtMost1(String a, String b) {
+        int la = a.length(), lb = b.length();
+        if (Math.abs(la - lb) > 1) return false;
+        if (la == lb) {
+            int diff = 0;
+            for (int i = 0; i < la; i++) {
+                if (a.charAt(i) != b.charAt(i) && ++diff > 1) return false;
+            }
+            return true;
+        }
+        String longer = la > lb ? a : b;
+        String shorter = la > lb ? b : a;
+        int i = 0, j = 0, skips = 0;
+        while (i < longer.length() && j < shorter.length()) {
+            if (longer.charAt(i) == shorter.charAt(j)) {
+                i++;
+                j++;
+            } else {
+                if (++skips > 1) return false;
+                i++;
+            }
+        }
+        return true;
     }
 
     private static String cmp(String s) {
@@ -133,6 +175,16 @@ public final class TrackMetadataParser {
         assert cs.getFirst().artist().equalsIgnoreCase("Skillet") : cs.getFirst();
         assert cs.getFirst().title().toLowerCase(Locale.ROOT).contains("awake and alive") : cs.getFirst();
         assert stripPresentation("Awake and Alive (Official Audio)").equals("Awake and Alive");
+
+        assert similarity("Toni", "T.O.N.I.") >= 0.85 : similarity("Toni", "T.O.N.I.");
+        double gun = similarity("Kollegah", "Kollegah") * 0.45
+                + similarity("Romantischer Guntriggerpuller", "Romatischer Guntriggerpuller") * 0.55;
+        assert gun >= 0.85 : gun;
+
+        List<TrackMetadataCandidate> topic = candidates("Kollegah - Topic", "T.O.N.I.");
+        assert topic.stream().anyMatch(c -> c.artist().equalsIgnoreCase("Kollegah")
+                && c.title().equalsIgnoreCase("T.O.N.I.")) : topic;
+
         System.out.println("ok: " + cs.getFirst());
     }
 }
